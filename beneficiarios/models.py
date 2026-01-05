@@ -1,41 +1,63 @@
 from django.db import models
+from django.contrib import admin  # <--- IMPORTANTE: Adicionei esta linha
+from datetime import date
 
 class Beneficiario(models.Model):
-    # Opções para campos de seleção
-    GENERO_CHOICES = [
-        ('M', 'Masculino'),
-        ('F', 'Feminino'),
-        ('O', 'Outro'),
+    TURNO_CHOICES = [
+        ('MANHA', 'Manhã'),
+        ('TARDE', 'Tarde'),
+        ('NOITE', 'Noite'),
+        ('INTEGRAL', 'Integral'),
     ]
 
-    ESTADO_CIVIL_CHOICES = [
-        ('SOL', 'Solteiro(a)'),
-        ('CAS', 'Casado(a)'),
-        ('DIV', 'Divorciado(a)'),
-        ('VIU', 'Viúvo(a)'),
+    STATUS_CHOICES = [
+        ('ATIVO', 'Ativo'),
+        ('INATIVO', 'Inativo'),
+        ('PENDENTE', 'Pendente'),
+        ('DESLIGADO', 'Desligado'),
     ]
 
-    # Dados Pessoais Básicos
-    nome_completo = models.CharField(max_length=200)
+    # Dados Pessoais
+    nome_completo = models.CharField(max_length=200, verbose_name="Nome Completo")
+    data_nascimento = models.DateField(verbose_name="Data de Nascimento")
     cpf = models.CharField(max_length=14, unique=True, verbose_name="CPF")
-    data_nascimento = models.DateField()
-    genero = models.CharField(max_length=1, choices=GENERO_CHOICES)
-    nome_mae = models.CharField(max_length=200, verbose_name="Nome da Mãe")
+    contato = models.CharField(max_length=100, verbose_name="Contato (Tel/Email)")
 
-    # Contato e Endereço
-    telefone = models.CharField(max_length=20, blank=True, null=True)
-    endereco = models.TextField(verbose_name="Endereço Completo")
-    referencia = models.CharField(max_length=200, blank=True, null=True)
+    # Saúde e Acessibilidade
+    quadro_saude = models.CharField(max_length=255, blank=True, null=True, verbose_name="Quadro de Saúde Existente?")
+    necessita_acessibilidade = models.CharField(max_length=255, blank=True, null=True, verbose_name="Necessita de Acessibilidade? Qual?")
 
-    # Dados Sociais
-    nis = models.CharField(max_length=20, blank=True, null=True, verbose_name="NIS/PIS")
-    renda_familiar = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    qtd_membros_familia = models.IntegerField(verbose_name="Qtd. Pessoas na Casa", default=1) 
-    observacoes = models.TextField(blank=True, null=True)
+    # Dados do Projeto/ONG
+    projeto = models.CharField(max_length=100, verbose_name="Projeto")
+    atividade = models.CharField(max_length=100, verbose_name="Atividade / Qtd. Atividades")
+    turno = models.CharField(max_length=20, choices=TURNO_CHOICES, verbose_name="Turno")
+    
+    # Responsável
+    responsavel = models.CharField(max_length=200, blank=True, null=True, verbose_name="Responsável")
+    grau_parentesco = models.CharField(max_length=50, blank=True, null=True, verbose_name="Grau de Parentesco")
 
-    # Auditoria (Saber quando foi criado)
-    data_cadastro = models.DateTimeField(auto_now_add=True)
-    ativo = models.BooleanField(default=True)
+    # Controle Interno
+    observacoes = models.TextField(blank=True, null=True, verbose_name="Observações")
+    data_cadastro = models.DateTimeField(auto_now_add=True, verbose_name="Data de Cadastro")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ATIVO', verbose_name="Status")
 
     def __str__(self):
-        return f"{self.nome_completo} ({self.cpf})"
+        return self.nome_completo
+
+    # --- Campos Calculados ---
+
+    @property
+    def idade(self):
+        """Calcula a idade (Anos) baseado na data de nascimento"""
+        today = date.today()
+        if self.data_nascimento:
+            return today.year - self.data_nascimento.year - ((today.month, today.day) < (self.data_nascimento.month, self.data_nascimento.day))
+        return 0
+
+    @property
+    @admin.display(description="18+", boolean=True) # <--- CORREÇÃO AQUI
+    def eh_maior_idade(self):
+        """Retorna True se for 18+, usado para a coluna 18+"""
+        return self.idade >= 18
+    
+    # REMOVI AS LINHAS QUE DAVAM ERRO AQUI EMBAIXO
