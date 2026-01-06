@@ -3,30 +3,31 @@ from .models import Beneficiario
 
 @admin.register(Beneficiario)
 class BeneficiarioAdmin(admin.ModelAdmin):
-    # As colunas que vão aparecer na tabela de listagem
-    list_display = ('id', 'nome_completo', 'projeto', 'idade', 'eh_maior_idade', 'contato', 'status', 'data_cadastro')
-    
-    # Filtros laterais
-    list_filter = ('projeto', 'turno', 'status', 'data_cadastro')
-    
-    # Barra de busca
-    search_fields = ('nome_completo', 'cpf', 'responsavel')
-    
-    # Organização visual do formulário de cadastro (Agrupando campos)
+    list_display = ('nome_completo', 'projeto', 'idade', 'eh_maior_idade', 'telefone', 'status')
+    list_filter = ('projeto', 'turno', 'status')
+    search_fields = ('nome_completo', 'cpf')
+
     fieldsets = (
         ('Identificação', {
-            'fields': ('nome_completo', 'cpf', 'data_nascimento', 'contato')
+            'fields': ('nome_completo', 'cpf', 'data_nascimento', 'telefone')
         }),
-        ('Saúde & Acessibilidade', {
-            'fields': ('quadro_saude', 'necessita_acessibilidade')
+        ('Saúde', {
+            'fields': ('tem_problema_saude', 'descricao_saude')
         }),
-        ('Vínculo com a ONG', {
+        ('Acessibilidade', {
+            'fields': ('necessita_acessibilidade', 'descricao_acessibilidade')
+        }),
+        ('Vínculo', {
             'fields': ('projeto', 'atividade', 'turno', 'status')
         }),
-        ('Responsável (Se menor)', {
+        ('Dados do Responsável (Obrigatório para menores de 18)', {
+            'classes': ('responsavel-group',),
             'fields': ('responsavel', 'grau_parentesco')
         }),
         ('Outros', {
             'fields': ('observacoes',)
         }),
     )
+
+    class Media:
+        js = ('beneficiarios/js/admin_script.js',)

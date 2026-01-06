@@ -21,11 +21,13 @@ class Beneficiario(models.Model):
     nome_completo = models.CharField(max_length=200, verbose_name="Nome Completo")
     data_nascimento = models.DateField(verbose_name="Data de Nascimento")
     cpf = models.CharField(max_length=14, unique=True, verbose_name="CPF")
-    contato = models.CharField(max_length=100, verbose_name="Contato (Tel/Email)")
+    telefone = models.CharField(max_length=20, verbose_name="Telefone para Contato")
 
     # Saúde e Acessibilidade
-    quadro_saude = models.CharField(max_length=255, blank=True, null=True, verbose_name="Quadro de Saúde Existente?")
-    necessita_acessibilidade = models.CharField(max_length=255, blank=True, null=True, verbose_name="Necessita de Acessibilidade? Qual?")
+    tem_problema_saude = models.BooleanField(default=False, verbose_name="Possui Quadro de Saúde?")
+    descricao_saude = models.CharField(max_length=255, blank=True, null=True, verbose_name="Qual o quadro de saúde?")
+    necessita_acessibilidade = models.BooleanField(default=False, verbose_name="Necessita de Acessibilidade?")
+    descricao_acessibilidade = models.CharField(max_length=255, blank=True, null=True, verbose_name="Qual acessibilidade?")
 
     # Dados do Projeto/ONG
     projeto = models.CharField(max_length=100, verbose_name="Projeto")
