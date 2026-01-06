@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'beneficiarios',
+    'atividades',
 ]
 
 MIDDLEWARE = [
@@ -134,3 +135,9 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [
     BASE_DIR / "beneficiarios/static",
 ]
+
+# URL base para acessar os arquivos no navegador
+MEDIA_URL = '/media/'
+
+# Pasta física no computador onde os arquivos ficam
+MEDIA_ROOT = BASE_DIR / 'media'
