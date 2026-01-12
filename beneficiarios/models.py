@@ -2,14 +2,17 @@ from django.db import models
 from django.contrib import admin  # <--- IMPORTANTE: Adicionei esta linha
 from datetime import date
 
-class Beneficiario(models.Model):
-    TURNO_CHOICES = [
-        ('MANHA', 'Manhã'),
-        ('TARDE', 'Tarde'),
-        ('NOITE', 'Noite'),
-        ('INTEGRAL', 'Integral'),
-    ]
+class Turno(models.Model):
+    nome = models.CharField(max_length=50, unique=True, verbose_name="Nome do Turno")
 
+    def __str__(self):
+        return self.nome
+
+    class Meta:
+        verbose_name = "Turno"
+        verbose_name_plural = "Turnos"
+
+class Beneficiario(models.Model):
     STATUS_CHOICES = [
         ('ATIVO', 'Ativo'),
         ('INATIVO', 'Inativo'),
@@ -32,7 +35,7 @@ class Beneficiario(models.Model):
     # Dados do Projeto/ONG
     projeto = models.CharField(max_length=100, verbose_name="Projeto")
     atividade = models.CharField(max_length=100, verbose_name="Atividade / Qtd. Atividades")
-    turno = models.CharField(max_length=20, choices=TURNO_CHOICES, verbose_name="Turno")
+    turno = models.ForeignKey(Turno, on_delete=models.PROTECT, verbose_name="Turno")
     
     # Responsável
     responsavel = models.CharField(max_length=200, blank=True, null=True, verbose_name="Responsável")

@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ titulo }} | NBR{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h4 class="mb-0">{{ titulo }}</h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <h5 class="text-primary mb-3">Dados Pessoais</h5>
+                    <div class="row">
+                        <div class="col-md-6">{{ form.nome_completo|as_crispy_field }}</div>
+                        <div class="col-md-3">{{ form.data_nascimento|as_crispy_field }}</div>
+                        <div class="col-md-3">{{ form.cpf|as_crispy_field }}</div>
+                        <div class="col-md-6">{{ form.telefone|as_crispy_field }}</div>
+                    </div>
+
+                    <h5 class="text-primary mt-4 mb-3">Programa</h5>
+                    <div class="row">
+                        <div class="col-md-4">{{ form.projeto|as_crispy_field }}</div>
+                        <div class="col-md-4">{{ form.atividade|as_crispy_field }}</div>
+                        <div class="col-md-4">{{ form.turno|as_crispy_field }}</div>
+                    </div>
+
+                    <h5 class="text-primary mt-4 mb-3">Saúde e Acessibilidade</h5>
+                    <div class="row">
+                        <div class="col-md-3">{{ form.tem_problema_saude|as_crispy_field }}</div>
+                        <div class="col-md-9">{{ form.descricao_saude|as_crispy_field }}</div>
+                        <div class="col-md-3">{{ form.necessita_acessibilidade|as_crispy_field }}</div>
+                        <div class="col-md-9">{{ form.descricao_acessibilidade|as_crispy_field }}</div>
+                    </div>
+
+                    <h5 class="text-primary mt-4 mb-3">Controle</h5>
+                    <div class="row">
+                        <div class="col-md-3">{{ form.status|as_crispy_field }}</div>
+                        <div class="col-md-9">{{ form.observacoes|as_crispy_field }}</div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <a href="{% url 'beneficiarios_list' %}" class="btn btn-outline-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-success"><i class="bi bi-save"></i> Salvar
+                            Registro</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

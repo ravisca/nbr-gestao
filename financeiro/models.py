@@ -12,17 +12,31 @@ class Conta(models.Model):
         return f"{self.nome} - R$ {self.saldo_atual}"
 
 # --- TABELA 1: ENTRADAS (Simples) ---
-class Receita(models.Model):
-    CATEGORIA_CHOICES = [
-        ('DOACAO', 'Doação'),
-        ('BAZAR', 'Venda de Bazar'),
-        ('EVENTO', 'Evento'),
-        ('VERBA', 'Verba/Convênio'),
-        ('OUTRO', 'Outro'),
-    ]
+class CategoriaReceita(models.Model):
+    nome = models.CharField(max_length=50, unique=True, verbose_name="Nome da Categoria")
 
+    def __str__(self):
+        return self.nome
+
+    class Meta:
+        verbose_name = "Categoria de Receita"
+        verbose_name_plural = "Categorias de Receita"
+
+class Rubrica(models.Model):
+    nome = models.CharField(max_length=100, unique=True, verbose_name="Nome da Rúbrica")
+    descricao = models.TextField(blank=True, null=True, verbose_name="Descrição")
+
+    def __str__(self):
+        return self.nome
+
+    class Meta:
+        verbose_name = "Rúbrica"
+        verbose_name_plural = "Rúbricas"
+
+# --- TABELA 1: ENTRADAS (Simples) ---
+class Receita(models.Model):
     conta = models.ForeignKey(Conta, on_delete=models.PROTECT, verbose_name="Conta de Entrada")
-    categoria = models.CharField(max_length=20, choices=CATEGORIA_CHOICES)
+    categoria = models.ForeignKey(CategoriaReceita, on_delete=models.PROTECT, verbose_name="Categoria")
     valor = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Valor (R$)")
     data = models.DateField(default=timezone.now, verbose_name="Data do Recebimento")
     descricao = models.CharField(max_length=200, verbose_name="Descrição")
@@ -64,7 +78,7 @@ class Despesa(models.Model):
     data_emissao = models.DateField(verbose_name="Dt. Emissão")
     
     # Classificação
-    rubrica = models.CharField(max_length=100, verbose_name="Rúbrica (Ex: Material Consumo, RH)")
+    rubrica = models.ForeignKey(Rubrica, on_delete=models.PROTECT, verbose_name="Rúbrica (Ex: Material Consumo, RH)")
     valor = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Valor (R$)")
     
     # Competência

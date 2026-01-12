@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ titulo }} | NBR{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm border-top border-5 border-{{ cor }}">
+            <div class="card-header bg-white py-3">
+                <h4 class="mb-0 text-{{ cor }}">{{ titulo }}</h4>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    {{ form|crispy }}
+
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <a href="{% url 'financeiro_dashboard' %}" class="btn btn-outline-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-{{ cor }}">
+                            <i class="bi bi-check-lg"></i> Confirmar Lançamento
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

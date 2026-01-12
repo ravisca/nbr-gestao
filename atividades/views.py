@@ -6,7 +6,8 @@ from django.forms import modelform_factory
 
 # Função para verificar se é Monitor ou Staff
 def eh_monitor_ou_admin(user):
-    return user.groups.filter(name='Monitores').exists() or user.is_staff
+    # Verifica permissão específica em vez de nome de grupo hardcoded
+    return user.has_perm('atividades.add_registroatividade') or user.is_staff
 
 # Criamos um formulário automático baseado no Modelo
 AtividadeForm = modelform_factory(RegistroAtividade, 

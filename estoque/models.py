@@ -8,11 +8,21 @@ class Categoria(models.Model):
     def __str__(self): return self.nome
     class Meta: verbose_name_plural = "Categorias"
 
+class UnidadeMedida(models.Model):
+    sigla = models.CharField(max_length=10, unique=True, verbose_name="Sigla")
+    nome = models.CharField(max_length=50, verbose_name="Nome Completo")
+
+    def __str__(self):
+        return f"{self.nome} ({self.sigla})"
+    
+    class Meta:
+        verbose_name = "Unidade de Medida"
+        verbose_name_plural = "Unidades de Medida"
+
 class Item(models.Model):
-    UNIDADE_CHOICES = [('UN', 'Unidade'), ('KG', 'Quilo'), ('LT', 'Litro'), ('CX', 'Caixa'), ('PCT', 'Pacote')]
     categoria = models.ForeignKey(Categoria, on_delete=models.PROTECT)
     nome = models.CharField(max_length=200, verbose_name="Nome do Item")
-    unidade = models.CharField(max_length=3, choices=UNIDADE_CHOICES, default='UN')
+    unidade = models.ForeignKey(UnidadeMedida, on_delete=models.PROTECT, verbose_name="Unidade")
     quantidade_atual = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Saldo em Estoque")
     estoque_minimo = models.DecimalField(max_digits=10, decimal_places=2, default=5, verbose_name="Estoque Mínimo")
 

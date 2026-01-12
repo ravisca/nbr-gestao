@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ beneficiario.nome_completo }} | NBR{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <a href="{% url 'beneficiarios_list' %}" class="text-decoration-none">
+        <i class="bi bi-arrow-left"></i> Voltar para lista
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body text-center">
+                <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
+                    style="width: 100px; height: 100px;">
+                    <i class="bi bi-person fs-1 text-secondary"></i>
+                </div>
+                <h3>{{ beneficiario.nome_completo }}</h3>
+                <p class="text-muted">{{ beneficiario.idade }} anos</p>
+
+                <span class="badge bg-{{ beneficiario.status|yesno:'success,danger' }} fs-6">
+                    {{ beneficiario.get_status_display }}
+                </span>
+
+                <hr>
+
+                <div class="text-start">
+                    <p><strong>CPF:</strong> {{ beneficiario.cpf }}</p>
+                    <p><strong>Telefone:</strong> {{ beneficiario.telefone }}</p>
+                    <p><strong>Responsável:</strong> {{ beneficiario.responsavel|default:"-" }} ({{
+                        beneficiario.grau_parentesco|default:"-" }})</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Dados do Programa</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <small class="text-muted d-block">Projeto</small>
+                        <h6>{{ beneficiario.projeto }}</h6>
+                    </div>
+                    <div class="col-md-4">
+                        <small class="text-muted d-block">Atividade</small>
+                        <h6>{{ beneficiario.atividade }}</h6>
+                    </div>
+                    <div class="col-md-4">
+                        <small class="text-muted d-block">Turno</small>
+                        <h6>{{ beneficiario.get_turno_display }}</h6>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Saúde e Detalhes</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>Problema de Saúde?</strong>
+                    <span class="badge bg-{{ beneficiario.tem_problema_saude|yesno:'warning,secondary' }}">
+                        {{ beneficiario.tem_problema_saude|yesno:'Sim,Não' }}
+                    </span>
+                    {% if beneficiario.tem_problema_saude %}
+                    <p class="mt-1">{{ beneficiario.descricao_saude }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <strong>Necessita Acessibilidade?</strong>
+                    <span class="badge bg-{{ beneficiario.necessita_acessibilidade|yesno:'warning,secondary' }}">
+                        {{ beneficiario.necessita_acessibilidade|yesno:'Sim,Não' }}
+                    </span>
+                    {% if beneficiario.necessita_acessibilidade %}
+                    <p class="mt-1">{{ beneficiario.descricao_acessibilidade }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="mt-4">
+                    <strong>Observações Internas:</strong>
+                    <p class="text-muted fst-italic">{{ beneficiario.observacoes|default:"Nenhuma observação
+                        registrada." }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
