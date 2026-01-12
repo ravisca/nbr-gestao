@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'beneficiarios',
     'atividades',
     'estoque',
+    'financeiro',
 ]
 
 MIDDLEWARE = [
