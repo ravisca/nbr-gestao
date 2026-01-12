@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     'atividades',
     'estoque',
     'financeiro',
+    'crispy_forms',
+    'crispy_bootstrap5',
 ]
 
 MIDDLEWARE = [
@@ -143,3 +145,6 @@ MEDIA_URL = '/media/'
 
 # Pasta física no computador onde os arquivos ficam
 MEDIA_ROOT = BASE_DIR / 'media'
+
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"
