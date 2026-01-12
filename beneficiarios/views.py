@@ -3,6 +3,7 @@ from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DetailView, View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import Beneficiario
+from .forms import BeneficiarioForm
 from core.utils import render_to_pdf
 from django.utils import timezone
 
@@ -21,8 +22,8 @@ class BeneficiarioListView(LoginRequiredMixin, ListView):
 
 class BeneficiarioCreateView(LoginRequiredMixin, CreateView):
     model = Beneficiario
+    form_class = BeneficiarioForm
     template_name = 'beneficiarios/beneficiario_form.html'
-    fields = '__all__'
     success_url = reverse_lazy('beneficiarios_list')
     
     def get_context_data(self, **kwargs):
@@ -32,8 +33,8 @@ class BeneficiarioCreateView(LoginRequiredMixin, CreateView):
 
 class BeneficiarioUpdateView(LoginRequiredMixin, UpdateView):
     model = Beneficiario
+    form_class = BeneficiarioForm
     template_name = 'beneficiarios/beneficiario_form.html'
-    fields = '__all__'
     success_url = reverse_lazy('beneficiarios_list')
 
     def get_context_data(self, **kwargs):

@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card shadow border-0">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">{{ titulo }}</h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <h5 class="mb-3 text-secondary">Dados do Projeto</h5>
+                    <div class="row">
+                        <div class="col-md-8">
+                            {{ form.nome|as_crispy_field }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.ativo|as_crispy_field }}
+                        </div>
+                        <div class="col-12">
+                            {{ form.descricao|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <h5 class="mb-3 text-secondary">Atividades do Projeto</h5>
+                    <div class="alert alert-light border">
+                        <small class="text-muted"><i class="bi bi-info-circle"></i> Adicione aqui as atividades (ex:
+                            Treino, Aula, Oficina) que pertencem a este projeto.</small>
+                    </div>
+
+                    {{ atividades.management_form }}
+
+                    <div id="atividades-list">
+                        {% for form_atividade in atividades %}
+                        <div class="row align-items-center mb-2 atividade-item">
+                            <div class="col-md-10">
+                                {{ form_atividade.id }}
+                                {{ form_atividade.nome|as_crispy_field }}
+                            </div>
+                            <div class="col-md-2 text-center pt-4">
+                                {% if atividades.can_delete %}
+                                <div class="d-none">
+                                    {{ form_atividade.DELETE }}
+                                </div>
+                                <button type="button" class="btn btn-danger btn-sm remove-row"
+                                    onclick="removeRow(this, false)">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <button type="button" id="add-atividade" class="btn btn-outline-primary btn-sm mt-2">
+                        <i class="bi bi-plus-circle"></i> Adicionar Atividade
+                    </button>
+
+                    <!-- Template Oculto para Nova Linha -->
+                    <div id="empty-form" style="display:none;">
+                        <div class="row align-items-center mb-2 atividade-item">
+                            <div class="col-md-10">
+                                {{ atividades.empty_form.id }}
+                                {{ atividades.empty_form.nome|as_crispy_field }}
+                            </div>
+                            <div class="col-md-2 text-center pt-4">
+                                <button type="button" class="btn btn-danger btn-sm remove-row"
+                                    onclick="removeRow(this, true)">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function () {
+                            const addBtn = document.getElementById('add-atividade');
+                            const list = document.getElementById('atividades-list');
+                            const emptyForm = document.getElementById('empty-form').firstElementChild;
+                            const totalForms = document.getElementById('id_tipos_atividade-TOTAL_FORMS');
+
+                            addBtn.addEventListener('click', function () {
+                                const newForm = emptyForm.cloneNode(true);
+                                const currentForms = parseInt(totalForms.value);
+
+                                // Atualiza os índices do novo form
+                                newForm.innerHTML = newForm.innerHTML.replace(/__prefix__/g, currentForms);
+
+                                list.appendChild(newForm);
+                                totalForms.value = currentForms + 1;
+                            });
+                        });
+
+                        function removeRow(btn, isNew) {
+                            if (isNew) {
+                                // Se é novo (não salvo), remove direto do DOM
+                                btn.closest('.atividade-item').remove();
+                            } else {
+                                // Se já existe, pede confirmação
+                                if (confirm('Tem certeza que deseja excluir esta atividade?')) {
+                                    const row = btn.closest('.atividade-item');
+                                    const deleteCheckbox = row.querySelector('input[type=checkbox][name$="-DELETE"]');
+                                    if (deleteCheckbox) {
+                                        deleteCheckbox.checked = true;
+                                        row.style.display = 'none'; // Esconde a linha
+                                    }
+                                }
+                            }
+                        }
+                    </script>
+
+                    <div class="d-flex justify-content-end mt-4">
+                        <a href="{% url 'projeto_list' %}" class="btn btn-secondary me-2">Cancelar</a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-lg"></i> Salvar Projeto
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

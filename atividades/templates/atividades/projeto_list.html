@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestão de Projetos{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Projetos e Atividades</h2>
+    <a href="{% url 'projeto_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> Novo Projeto
+    </a>
+</div>
+
+<div class="row">
+    {% for projeto in projetos %}
+    <div class="col-md-6 mb-4">
+        <div class="card h-100 shadow-sm border-0">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <h5 class="card-title text-primary">{{ projeto.nome }}</h5>
+                    {% if projeto.ativo %}
+                    <span class="badge bg-success">Ativo</span>
+                    {% else %}
+                    <span class="badge bg-secondary">Inativo</span>
+                    {% endif %}
+                </div>
+                <p class="card-text text-muted">{{ projeto.descricao|default:"Sem descrição." }}</p>
+
+                <h6 class="mt-3 border-bottom pb-2">Atividades Cadastradas:</h6>
+                <ul class="list-group list-group-flush mb-3">
+                    {% for atividade in projeto.tipos_atividade.all %}
+                    <li class="list-group-item px-0 py-1">
+                        <i class="bi bi-circle-fill text-info" style="font-size: 8px;"></i> {{ atividade.nome }}
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item px-0 text-muted">Ainda não há atividades.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="card-footer bg-transparent border-0 text-end">
+                <a href="{% url 'projeto_update' projeto.pk %}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-pencil"></i> Editar
+                </a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-info">
+            Nenhum projeto cadastrado. Crie o primeiro!
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

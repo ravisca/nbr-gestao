@@ -148,9 +148,9 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # Auth Settings
-LOGIN_URL = 'admin:login' # Redirect to admin login for now
+LOGIN_URL = 'login' 
 LOGIN_REDIRECT_URL = 'home'
-LOGOUT_REDIRECT_URL = 'admin:login'
+LOGOUT_REDIRECT_URL = 'login'
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"

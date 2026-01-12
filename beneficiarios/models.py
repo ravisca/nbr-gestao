@@ -33,8 +33,8 @@ class Beneficiario(models.Model):
     descricao_acessibilidade = models.CharField(max_length=255, blank=True, null=True, verbose_name="Qual acessibilidade?")
 
     # Dados do Projeto/ONG
-    projeto = models.CharField(max_length=100, verbose_name="Projeto")
-    atividade = models.CharField(max_length=100, verbose_name="Atividade / Qtd. Atividades")
+    projeto = models.ForeignKey('atividades.Projeto', on_delete=models.PROTECT, verbose_name="Projeto")
+    atividade = models.ForeignKey('atividades.TipoAtividade', on_delete=models.PROTECT, verbose_name="Atividade / Qtd. Atividades")
     turno = models.ForeignKey(Turno, on_delete=models.PROTECT, verbose_name="Turno")
     
     # Responsável
