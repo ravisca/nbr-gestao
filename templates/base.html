@@ -170,8 +170,7 @@
                     {{ request.user.username|slice:":1"|upper }}
                 </div>
                 <div style="line-height: 1.2;">
-                    <small class="d-block fw-bold">{% firstof request.user.get_full_name request.user.username
-                        %}</small>
+                    <small class="d-block fw-bold">{{ user.get_full_name|default:user.username }}</small>
                     <small class="text-muted" style="font-size: 0.75rem;">Administrador</small>
                 </div>
             </div>

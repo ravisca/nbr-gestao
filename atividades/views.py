@@ -99,15 +99,8 @@ def sucesso_view(request):
     return render(request, 'atividades/sucesso.html')
 
 # --- AJAX HTMX ---
-def load_atividades(request):
-    projeto_id = request.GET.get('projeto')
-    if projeto_id:
-        atividades = TipoAtividade.objects.filter(projeto_id=projeto_id).order_by('nome')
-    else:
-        atividades = TipoAtividade.objects.none()
-    return render(request, 'atividades/atividade_dropdown_list_options.html', {'atividades': atividades})
-
 # --- AJAX HTMX ---
+@login_required
 def load_atividades(request):
     projeto_id = request.GET.get('projeto')
     if projeto_id:

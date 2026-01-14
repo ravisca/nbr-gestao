@@ -16,14 +16,14 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from django.views.generic import TemplateView
+from .views import HomeView
 from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('django.contrib.auth.urls')), # URLs de Autenticação (Login, Logout, Password Reset)
-    path('', TemplateView.as_view(template_name='index.html'), name='home'),
+    path('', HomeView.as_view(), name='home'),
     path('atividades/', include('atividades.urls')),
     path('beneficiarios/', include('beneficiarios.urls')),
     path('estoque/', include('estoque.urls')),

@@ -6,13 +6,13 @@
     <title>Lista de Chamada</title>
     <style>
         @page {
-            size: A4;
-            margin: 1cm;
+            size: A4 landscape;
+            margin: 0.5cm;
         }
 
         body {
             font-family: Helvetica, sans-serif;
-            font-size: 10pt;
+            font-size: 8pt;
         }
 
         .header {
@@ -30,33 +30,23 @@
         th,
         td {
             border: 1px solid #000;
-            padding: 5px;
-            vertical-align: middle;
+            padding: 3px;
+            vertical-align: top;
+            word-wrap: break-word;
         }
 
         th {
             background-color: #f0f0f0;
             font-weight: bold;
-        }
-
-        .check-col {
-            width: 30px;
-        }
-
-        .footer {
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-            text-align: right;
-            font-size: 8pt;
-            color: #666;
+            text-align: left;
+            font-size: 7pt;
         }
     </style>
 </head>
 
 <body>
     <div class="header">
-        <h2>ONG NBR - Lista de Chamada</h2>
+        <h2>ONG NBR - Lista Completa de Beneficiários</h2>
         <p>Gerado em: {{ data_geracao|date:"d/m/Y H:i" }} | Por: {{ usuario.get_full_name|default:usuario.username }}
         </p>
     </div>
@@ -64,37 +54,57 @@
     <table>
         <thead>
             <tr>
-                <th style="width: 5%;">#</th>
-                <th style="width: 45%;">Nome do Aluno</th>
-                <th style="width: 25%;">Projeto/Atividade</th>
-                <th class="check-col"></th>
-                <th class="check-col"></th>
-                <th class="check-col"></th>
-                <th class="check-col"></th>
-                <th class="check-col"></th>
+                <th style="width: 14%;">Nome</th>
+                <th style="width: 9%;">CPF</th>
+                <th style="width: 3%;">Id.</th>
+                <th style="width: 10%;">Projeto</th>
+                <th style="width: 10%;">Atividade</th>
+                <th style="width: 7%;">Turno</th>
+                <th style="width: 10%;">Saúde</th>
+                <th style="width: 10%;">Acessib.</th>
+                <th style="width: 9%;">Contato</th>
+                <th style="width: 14%;">Responsável</th>
             </tr>
         </thead>
         <tbody>
             {% for b in beneficiarios %}
             <tr>
-                <td style="text-align: center;">{{ forloop.counter }}</td>
+                <td><b>{{ b.nome_completo|truncatechars:30 }}</b></td>
+                <td>{{ b.cpf }}</td>
+                <td style="text-align: center;">{{ b.idade }}</td>
+                <td>{{ b.projeto }}</td>
+                <td>{{ b.atividade }}</td>
+                <td>{{ b.turno }}</td>
                 <td>
-                    <strong>{{ b.nome_completo }}</strong><br>
-                    <small>Nasc: {{ b.data_nascimento|date:"d/m/Y" }}</small>
+                    {% if b.tem_problema_saude %}
+                    <span style="color:red;">Sim</span>
+                    {% if b.descricao_saude %}<br><small>{{ b.descricao_saude|truncatechars:30 }}</small>{% endif %}
+                    {% else %}
+                    Não
+                    {% endif %}
                 </td>
                 <td>
-                    {{ b.projeto }}<br>
-                    <small>{{ b.atividade }}</small>
+                    {% if b.necessita_acessibilidade %}
+                    <span style="color:blue;">Sim</span>
+                    {% if b.descricao_acessibilidade %}<br><small>{{ b.descricao_acessibilidade|truncatechars:30
+                        }}</small>{% endif %}
+                    {% else %}
+                    Não
+                    {% endif %}
                 </td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
+                <td>{{ b.telefone }}</td>
+                <td>
+                    {% if b.responsavel %}
+                    {{ b.responsavel|truncatechars:20 }}<br>
+                    <small>({{ b.grau_parentesco }})</small>
+                    {% else %}
+                    -
+                    {% endif %}
+                </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="8" style="text-align: center; padding: 20px;">Nenhum aluno ativo encontrado.</td>
+                <td colspan="10" style="text-align: center; padding: 20px;">Nenhum aluno ativo encontrado.</td>
             </tr>
             {% endfor %}
         </tbody>
