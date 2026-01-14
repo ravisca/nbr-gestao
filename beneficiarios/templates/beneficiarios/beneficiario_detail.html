@@ -29,8 +29,9 @@
                 <div class="text-start">
                     <p><strong>CPF:</strong> {{ beneficiario.cpf }}</p>
                     <p><strong>Telefone:</strong> {{ beneficiario.telefone }}</p>
-                    <p><strong>Responsável:</strong> {{ beneficiario.responsavel|default:"-" }} ({{
-                        beneficiario.grau_parentesco|default:"-" }})</p>
+                    {% if beneficiario.responsavel %}
+                    <p><strong>Responsável:</strong> {{ beneficiario.responsavel }} ({{ beneficiario.grau_parentesco|default:"-" }})</p>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -53,7 +54,7 @@
                     </div>
                     <div class="col-md-4">
                         <small class="text-muted d-block">Turno</small>
-                        <h6>{{ beneficiario.get_turno_display }}</h6>
+                        <h6>{{ beneficiario.turno }}</h6>
                     </div>
                 </div>
             </div>
@@ -86,8 +87,7 @@
 
                 <div class="mt-4">
                     <strong>Observações Internas:</strong>
-                    <p class="text-muted fst-italic">{{ beneficiario.observacoes|default:"Nenhuma observação
-                        registrada." }}</p>
+                    <p class="text-muted fst-italic">{{ beneficiario.observacoes|default:"Nenhuma observação registrada." }}</p>
                 </div>
             </div>
         </div>

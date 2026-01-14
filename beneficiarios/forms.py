@@ -7,7 +7,7 @@ class BeneficiarioForm(forms.ModelForm):
         model = Beneficiario
         fields = '__all__'
         widgets = {
-            'data_nascimento': forms.DateInput(attrs={'type': 'date'}),
+            'data_nascimento': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
         }
 
     def __init__(self, *args, **kwargs):

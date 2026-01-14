@@ -22,6 +22,15 @@
                         <div class="col-md-6">{{ form.telefone|as_crispy_field }}</div>
                     </div>
 
+                    <!-- Dados do Responsável (Condicional < 18 anos) -->
+                    <div id="responsavel-section" style="display:none;">
+                        <h5 class="text-primary mt-4 mb-3">Dados do Responsável</h5>
+                        <div class="row">
+                            <div class="col-md-8">{{ form.responsavel|as_crispy_field }}</div>
+                            <div class="col-md-4">{{ form.grau_parentesco|as_crispy_field }}</div>
+                        </div>
+                    </div>
+
                     <h5 class="text-primary mt-4 mb-3">Programa</h5>
                     <div class="row">
                         <div class="col-md-4">{{ form.projeto|as_crispy_field }}</div>
@@ -53,4 +62,86 @@
         </div>
     </div>
 </div>
+</form>
+</div>
+</div>
+</div>
+</div>
+
+<script src="https://unpkg.com/imask"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // --- MÁSCARAS DE INPUT ---
+        const cpfInput = document.getElementById('id_cpf');
+        const telInput = document.getElementById('id_telefone');
+
+        if (cpfInput) {
+            IMask(cpfInput, { mask: '000.000.000-00' });
+        }
+        if (telInput) {
+            IMask(telInput, { mask: '(00)00000-0000' });
+        }
+
+        // --- LÓGICA CONDICIONAL ---
+        function toggleField(checkboxId, fieldId) {
+            const checkbox = document.getElementById(checkboxId);
+            // O campo 'fieldId' é o ID do input gerado pelo Django.
+            // O Crispy Forms envolve o input em uma div com classe 'mb-3'.
+            // Vamos esconder essa div pai para sumir com o label também.
+            const input = document.getElementById(fieldId);
+            const parentDiv = input ? input.closest('.mb-3') || input.parentNode : null;
+
+            if (checkbox && parentDiv) {
+                // Função interna para atualizar visibilidade
+                const update = () => {
+                    if (checkbox.checked) {
+                        parentDiv.style.display = 'block';
+                    } else {
+                        parentDiv.style.display = 'none';
+                        input.value = ''; // Limpa o valor ao esconder
+                    }
+                };
+
+                // Executa agora e no evento change
+                update();
+                checkbox.addEventListener('change', update);
+            }
+        }
+
+        toggleField('id_tem_problema_saude', 'id_descricao_saude');
+        toggleField('id_necessita_acessibilidade', 'id_descricao_acessibilidade');
+
+        // --- VISIBILIDADE DO RESPONSÁVEL (MENOR DE 18 ANOS) ---
+        const dataNascInput = document.getElementById('id_data_nascimento');
+        const responsavelSection = document.getElementById('responsavel-section');
+
+        function checkAge() {
+            if (!dataNascInput.value) return;
+
+            const dob = new Date(dataNascInput.value);
+            const today = new Date();
+            let age = today.getFullYear() - dob.getFullYear();
+            const m = today.getMonth() - dob.getMonth();
+
+            if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+                age--;
+            }
+
+            if (age < 18) {
+                responsavelSection.style.display = 'block';
+            } else {
+                responsavelSection.style.display = 'none';
+                // Limpa os campos se esconder
+                document.getElementById('id_responsavel').value = '';
+                document.getElementById('id_grau_parentesco').value = '';
+            }
+        }
+
+        if (dataNascInput) {
+            dataNascInput.addEventListener('change', checkAge);
+            dataNascInput.addEventListener('blur', checkAge); // Garante update ao sair do campo
+            checkAge(); // Check inicial (edição)
+        }
+    });
+</script>
 {% endblock %}
