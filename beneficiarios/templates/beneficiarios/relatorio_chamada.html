@@ -1,0 +1,118 @@
+<!DOCTYPE HTML>
+<html lang="pt-br">
+
+<head>
+    <meta charset="utf-8">
+    <title>Lista de Chamada</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 0.5cm;
+        }
+
+        body {
+            font-family: Helvetica, sans-serif;
+            font-size: 8pt;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            border: 1px solid #000;
+            padding: 3px;
+            vertical-align: top;
+            word-wrap: break-word;
+        }
+
+        th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+            text-align: left;
+            font-size: 7pt;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h2>ONG NBR - Lista Completa de Beneficiários</h2>
+        <p>Gerado em: {{ data_geracao|date:"d/m/Y H:i" }} | Por: {{ usuario.get_full_name|default:usuario.username }}
+        </p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 14%;">Nome</th>
+                <th style="width: 9%;">CPF</th>
+                <th style="width: 3%;">Id.</th>
+                <th style="width: 10%;">Projeto</th>
+                <th style="width: 10%;">Atividade</th>
+                <th style="width: 7%;">Turno</th>
+                <th style="width: 10%;">Saúde</th>
+                <th style="width: 10%;">Acessib.</th>
+                <th style="width: 9%;">Contato</th>
+                <th style="width: 14%;">Responsável</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for b in beneficiarios %}
+            <tr>
+                <td><b>{{ b.nome_completo|truncatechars:30 }}</b></td>
+                <td>{{ b.cpf }}</td>
+                <td style="text-align: center;">{{ b.idade }}</td>
+                <td>{{ b.projeto }}</td>
+                <td>{{ b.atividade }}</td>
+                <td>{{ b.turno }}</td>
+                <td>
+                    {% if b.tem_problema_saude %}
+                    <span style="color:red;">Sim</span>
+                    {% if b.descricao_saude %}<br><small>{{ b.descricao_saude|truncatechars:30 }}</small>{% endif %}
+                    {% else %}
+                    Não
+                    {% endif %}
+                </td>
+                <td>
+                    {% if b.necessita_acessibilidade %}
+                    <span style="color:blue;">Sim</span>
+                    {% if b.descricao_acessibilidade %}<br><small>{{ b.descricao_acessibilidade|truncatechars:30
+                        }}</small>{% endif %}
+                    {% else %}
+                    Não
+                    {% endif %}
+                </td>
+                <td>{{ b.telefone }}</td>
+                <td>
+                    {% if b.responsavel %}
+                    {{ b.responsavel|truncatechars:20 }}<br>
+                    <small>({{ b.grau_parentesco }})</small>
+                    {% else %}
+                    -
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="10" style="text-align: center; padding: 20px;">Nenhum aluno ativo encontrado.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        Página <pdf:pagenumber> de <pdf:pagecount>
+    </div>
+</body>
+
+</html>

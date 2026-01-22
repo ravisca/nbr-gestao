@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Beneficiários | NBR{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Beneficiários</h2>
+    <div>
+        <a href="{% url 'beneficiarios_relatorio_chamada' %}" class="btn btn-outline-dark me-2" target="_blank">
+            <i class="bi bi-printer"></i> Imprimir Lista
+        </a>
+        <a href="{% url 'beneficiarios_create' %}" class="btn btn-primary">
+            <i class="bi bi-person-plus"></i> Novo Cadastro
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-2">
+            <div class="col-md-10">
+                <input type="text" name="busca" class="form-control" placeholder="Buscar por nome..."
+                    value="{{ request.GET.busca }}">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-secondary w-100"><i class="bi bi-search"></i>
+                    Buscar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Nome</th>
+                    <th>Idade</th>
+                    <th>Telefone</th>
+                    <th>Projeto/Fase</th>
+                    <th>Status</th>
+                    <th class="text-end">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in beneficiarios %}
+                <tr>
+                    <td>
+                        <div class="fw-bold">{{ b.nome_completo }}</div>
+                        <small class="text-muted">{{ b.cpf }}</small>
+                    </td>
+                    <td>{{ b.idade }} anos</td>
+                    <td>{{ b.telefone }}</td>
+                    <td>
+                        <span class="badge bg-info text-dark">{{ b.projeto }}</span>
+                        <small class="text-muted d-block">{{ b.turno }}</small>
+                    </td>
+                    <td>
+                        {% if b.status == 'ATIVO' %}
+                        <span class="badge bg-success">Ativo</span>
+                        {% elif b.status == 'INATIVO' %}
+                        <span class="badge bg-danger">Inativo</span>
+                        {% else %}
+                        <span class="badge bg-warning">{{ b.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <a href="{% url 'beneficiarios_detail' b.pk %}" class="btn btn-sm btn-outline-info"
+                            title="Ver Detalhes">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        <a href="{% url 'beneficiarios_update' b.pk %}" class="btn btn-sm btn-outline-primary"
+                            title="Editar">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-4 text-muted">Nenhum beneficiário encontrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

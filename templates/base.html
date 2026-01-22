@@ -1,0 +1,224 @@
+{% load static %}
+{% load core_tags %}
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"
+        integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC"
+        crossorigin="anonymous"></script>
+
+    <title>{% block title %}NBR Gestão{% endblock %}</title>
+
+    <style>
+        :root {
+            --sidebar-width: 280px;
+        }
+
+        body {
+            min-height: 100vh;
+            background-color: #f8f9fa;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 1000;
+            padding: 1rem;
+            background-color: #fff;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 2rem;
+        }
+
+        .nav-link {
+            color: #6c757d;
+            padding: 0.8rem 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            background-color: #e9ecef;
+            color: #0d6efd;
+            font-weight: 500;
+        }
+
+        .nav-link i {
+            font-size: 1.2rem;
+        }
+
+        .logo-area {
+            padding: 1rem 0;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid #eee;
+            text-align: center;
+        }
+
+        .logo-area h4 {
+            margin: 0;
+            color: #0d6efd;
+            font-weight: bold;
+        }
+
+        .user-menu {
+            margin-top: auto;
+            border-top: 1px solid #eee;
+            padding-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+            }
+
+            .sidebar.show {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+
+            .mobile-toggle {
+                display: block;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+
+    <!-- Mobile Toggle -->
+    <div class="d-md-none p-3 bg-white shadow-sm d-flex justify-content-between align-items-center mb-3">
+        <span class="fw-bold text-primary">NBR Gestão</span>
+        <button class="btn btn-outline-primary" onclick="toggleSidebar()">
+            <i class="bi bi-list"></i>
+        </button>
+    </div>
+
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="logo-area">
+            <h4>NBR Gestão</h4>
+            <small class="text-muted">Painel Administrativo</small>
+        </div>
+
+        <div class="nav flex-column">
+            {% if not request.user|has_group:"Professor" %}
+            <a href="{% url 'home' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                <i class="bi bi-speedometer2"></i> Dashboard
+            </a>
+
+            <a href="{% url 'beneficiarios_list' %}"
+                class="nav-link {% if 'beneficiarios' in request.path %}active{% endif %}">
+                <i class="bi bi-people"></i> Beneficiários
+            </a>
+
+            <a href="{% url 'estoque_list' %}" class="nav-link {% if 'estoque' in request.path %}active{% endif %}">
+                <i class="bi bi-box-seam"></i> Estoque
+            </a>
+
+            <a href="{% url 'financeiro_dashboard' %}"
+                class="nav-link {% if 'financeiro' in request.path %}active{% endif %}">
+                <i class="bi bi-cash-coin"></i> Financeiro
+            </a>
+            {% endif %}
+
+            {% if not request.user|has_group:"Professor" %}
+            <div class="h6 sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                <span>ADMINISTRAÇÃO</span>
+            </div>
+            {% endif %}
+            <ul class="nav flex-column mb-2">
+                <li class="nav-item">
+                    <a class="nav-link {% if 'projetos' in request.path %}active{% endif %}"
+                        href="{% url 'projeto_list' %}">
+                        <i class="bi bi-folder-plus"></i> Gestão de Projetos
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if 'usuarios' in request.path %}active{% endif %}"
+                        href="{% url 'usuario_list' %}">
+                        <i class="bi bi-person-lines-fill"></i> Gestão de Usuários
+                    </a>
+                </li>
+            </ul>
+
+            <a href="{% url 'registrar_atividade_mobile' %}"
+                class="nav-link {% if 'atividades' in request.path %}active{% endif %}">
+                <i class="bi bi-phone"></i> Atividades (Mobile)
+            </a>
+        </div>
+
+        <div class="user-menu">
+            <div class="d-flex align-items-center gap-2 mb-3 px-2">
+                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+                    style="width: 40px; height: 40px;">
+                    {{ request.user.username|slice:":1"|upper }}
+                </div>
+                <div style="line-height: 1.2;">
+                    <small class="d-block fw-bold">{{ user.get_full_name|default:user.username }}</small>
+                    <small class="text-muted" style="font-size: 0.75rem;">
+                        {% if request.user|has_group:"Professor" %}Professor{% else %}Administrador{% endif %}
+                    </small>
+                </div>
+            </div>
+            <form action="{% url 'logout' %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger btn-sm w-100">
+                    <i class="bi bi-box-arrow-right"></i> Sair
+                </button>
+            </form>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('show');
+        }
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

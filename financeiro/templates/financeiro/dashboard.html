@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}Financeiro | NBR{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <h2>Painel Financeiro</h2>
+        <div>
+            <a href="{% url 'financeiro_relatorio_prestacao' %}" class="btn btn-outline-dark me-2" target="_blank">
+                <i class="bi bi-file-earmark-pdf"></i> Relatório Mensal
+            </a>
+            <a href="{% url 'financeiro_receita_create' %}" class="btn btn-success">
+                <i class="bi bi-arrow-down"></i> Receita
+            </a>
+            <a href="{% url 'financeiro_despesa_create' %}" class="btn btn-danger">
+                <i class="bi bi-arrow-up"></i> Despesa
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Cards de Contas -->
+<div class="row g-4 mb-5">
+    {% for conta in contas %}
+    <div class="col-md-4">
+        <div class="card shadow-sm border-start border-4 border-primary">
+            <div class="card-body">
+                <h6 class="text-muted text-uppercase mb-2">{{ conta.nome }}</h6>
+                <h3 class="fw-bold mb-0">R$ {{ conta.saldo_atual }}</h3>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-info">Nenhuma conta bancária cadastrada.</div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="row">
+    <!-- Últimas Receitas -->
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 text-success">
+                    <i class="bi bi-arrow-down-circle"></i> Últimas Entradas
+                </h5>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for r in receitas_recentes %}
+                <div class="list-group-item">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">{{ r.descricao }}</h6>
+                        <small class="fw-bold text-success">+ R$ {{ r.valor }}</small>
+                    </div>
+                    <small class="text-muted">{{ r.data|date:"d/m/Y" }} - {{ r.conta.nome }}</small>
+                </div>
+                {% empty %}
+                <div class="list-group-item text-muted text-center py-4">
+                    Nenhuma receita recente.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Últimas Despesas -->
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 text-danger">
+                    <i class="bi bi-arrow-up-circle"></i> Últimas Saídas
+                </h5>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for d in despesas_recentes %}
+                <div class="list-group-item">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">{{ d.razao_social }}</h6>
+                        <small class="fw-bold text-danger">- R$ {{ d.valor }}</small>
+                    </div>
+                    <small class="text-muted">
+                        {{ d.data_emissao|date:"d/m/Y" }} | Ref: {{ d.mes_referencia }}/{{ d.ano_referencia }}
+                    </small>
+                </div>
+                {% empty %}
+                <div class="list-group-item text-muted text-center py-4">
+                    Nenhuma despesa recente.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
