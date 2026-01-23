@@ -18,7 +18,11 @@ def eh_admin(user):
 
 class AdminRequiredMixin(UserPassesTestMixin):
     def test_func(self):
+<<<<<<< HEAD
         return self.request.user.is_staff
+=======
+        return self.request.user.is_staff or self.request.user.groups.filter(name='Professor').exists()
+>>>>>>> a014260e5a3fa23c4620002e99e70b890e84ffb1
 
 # --- Views de Gestão de Projetos (CRUD Master-Detail) ---
 class ProjetoListView(LoginRequiredMixin, AdminRequiredMixin, ListView):

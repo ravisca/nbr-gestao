@@ -1,5 +1,38 @@
+<<<<<<< HEAD
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 class HomeView(LoginRequiredMixin, TemplateView):
     template_name = 'index.html'
+=======
+
+from django.views.generic import TemplateView, ListView, CreateView
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.models import User
+from django.urls import reverse_lazy
+from .forms import UsuarioCreationForm
+
+class AdminRequiredMixin(UserPassesTestMixin):
+    def test_func(self):
+        return self.request.user.is_staff
+
+class HomeView(LoginRequiredMixin, TemplateView):
+    template_name = 'index.html'
+
+class UsuarioListView(LoginRequiredMixin, AdminRequiredMixin, ListView):
+    model = User
+    template_name = 'core/usuario_list.html'
+    context_object_name = 'usuarios'
+    ordering = ['username']
+
+class UsuarioCreateView(LoginRequiredMixin, AdminRequiredMixin, CreateView):
+    model = User
+    form_class = UsuarioCreationForm
+    template_name = 'core/usuario_form.html'
+    success_url = reverse_lazy('usuario_list')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['titulo'] = 'Novo Usuário'
+        return context
+>>>>>>> a014260e5a3fa23c4620002e99e70b890e84ffb1
