@@ -1,10 +1,3 @@
-<<<<<<< HEAD
-from django.views.generic import TemplateView
-from django.contrib.auth.mixins import LoginRequiredMixin
-
-class HomeView(LoginRequiredMixin, TemplateView):
-    template_name = 'index.html'
-=======
 
 from django.views.generic import TemplateView, ListView, CreateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -35,4 +28,4 @@ class UsuarioCreateView(LoginRequiredMixin, AdminRequiredMixin, CreateView):
         context = super().get_context_data(**kwargs)
         context['titulo'] = 'Novo Usuário'
         return context
->>>>>>> a014260e5a3fa23c4620002e99e70b890e84ffb1
+

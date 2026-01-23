@@ -16,11 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-<<<<<<< HEAD
-from .views import HomeView
-=======
 from .views import HomeView, UsuarioListView, UsuarioCreateView
->>>>>>> a014260e5a3fa23c4620002e99e70b890e84ffb1
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -32,13 +28,10 @@ urlpatterns = [
     path('beneficiarios/', include('beneficiarios.urls')),
     path('estoque/', include('estoque.urls')),
     path('financeiro/', include('financeiro.urls')),
-<<<<<<< HEAD
-=======
-    
+
     # Gestão de Usuários
     path('usuarios/', UsuarioListView.as_view(), name='usuario_list'),
     path('usuarios/criar/', UsuarioCreateView.as_view(), name='usuario_create'),
->>>>>>> a014260e5a3fa23c4620002e99e70b890e84ffb1
 ]
 
 if settings.DEBUG:

@@ -43,10 +43,7 @@ INSTALLED_APPS = [
     'financeiro',
     'crispy_forms',
     'crispy_bootstrap5',
-<<<<<<< HEAD
-=======
     'core',
->>>>>>> a014260e5a3fa23c4620002e99e70b890e84ffb1
 ]
 
 MIDDLEWARE = [
@@ -57,10 +54,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-<<<<<<< HEAD
-=======
     'core.middleware.RoleMiddleware',
->>>>>>> a014260e5a3fa23c4620002e99e70b890e84ffb1
 ]
 
 ROOT_URLCONF = 'core.urls'
