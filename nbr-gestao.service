@@ -13,8 +13,7 @@ Group=www-data
 WorkingDirectory=/home/ubuntu/nbr-gestao
 
 # Environment variables
-# It's recommended to use an env file, e.g., EnvironmentFile=/home/ubuntu/nbr-gestao/.env
-# Or export them here directly
+EnvironmentFile=/home/ubuntu/nbr-gestao/.env
 Environment="PATH=/home/ubuntu/nbr-gestao/venv/bin"
 Environment="DJANGO_SETTINGS_MODULE=core.settings"
 

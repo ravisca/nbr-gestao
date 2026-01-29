@@ -1,69 +1,74 @@
-# Linux Deployment Guide
+# Guia de Implantação Linux
 
-This guide explains how to deploy the **nbr-gestao** application as a systemd service on Linux using Gunicorn.
+Este guia explica como implantar a aplicação **nbr-gestao** como um serviço systemd no Linux usando Gunicorn.
 
-## Prerequisites
+## Pré-requisitos
 
-- Linux Server (Ubuntu/Debian recommended)
-- Python 3.10+ installed
-- Virtual environment created and active
-- Project files cloned to the server
+- Servidor Linux (Ubuntu/Debian recomendado)
+- Python 3.10+ instalado
+- Ambiente virtual criado e ativo
+- Arquivos do projeto clonados no servidor
 
-## Setup Steps
+## Passos para Configuração
 
-### 1. Environment Configurations
+### 1. Configurações de Ambiente
 
-Create a `.env` file in the project root (`nbr-gestao/`) with your production secrets:
+Crie um arquivo `.env` na raiz do projeto (`nbr-gestao/`) com seus segredos de produção:
 
 ```bash
 # .env
+SECRET_KEY='django-insecure'
 DEBUG=False
-SECRET_KEY=your_production_secret_key
-# Add other variables as needed (DB_NAME, DB_USER, etc.)
+ALLOWED_HOSTS=*,127.0.0.1
 ```
 
-### 2. Install Dependencies
+> **Dica:** Para gerar uma `SECRET_KEY` segura, rode este comando no terminal:
+> ```bash
+> python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'
+> ```
 
-Make sure your virtual environment is active and dependencies are installed:
+### 2. Instalar Dependências
+
+Certifique-se de que seu ambiente virtual esteja ativo e as dependências instaladas:
 
 ```bash
-cd /path/to/nbr-gestao
+cd /caminho/para/nbr-gestao
 source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 3. Setup Service
+### 3. Configurar Serviço
 
-We have provided a script `setup_service.sh` to automate the configuration. It will:
-1.  Install `gunicorn` if missing.
-2.  Update the `nbr-gestao.service` file with your current user and file paths.
-3.  Link the service to `/etc/systemd/system/`.
-4.  Start and enable the service.
+Fornecemos um script `setup_service.sh` para automatizar a configuração. Ele irá:
+1.  Instalar `gunicorn` se estiver faltando.
+2.  Atualizar o arquivo `nbr-gestao.service` com seu usuário e caminhos de arquivo atuais.
+3.  Vincular o serviço a `/etc/systemd/system/`.
+4.  Iniciar e habilitar o serviço.
 
-**Run the script:**
+**Execute o script:**
 
 ```bash
 chmod +x setup_service.sh
 ./setup_service.sh
 ```
 
-### 4. Verify Service
+### 4. Verificar Serviço
 
-Check the status of the service:
+Verifique o status do serviço:
 
 ```bash
 sudo systemctl status nbr-gestao
 ```
 
-To view logs:
+Para ver os logs:
 
 ```bash
 journalctl -u nbr-gestao -f
 ```
 
-## Manual Configuration (Optional)
+## Configuração Manual (Opcional)
 
-If you prefer to configure manually, edit `nbr-gestao.service` to match your paths and user, then copy it to `/etc/systemd/system/`.
+Se preferir configurar manualmente, edite `nbr-gestao.service` para corresponder aos seus caminhos e usuário, depois copie-o para `/etc/systemd/system/`.
 
 ```bash
 sudo cp nbr-gestao.service /etc/systemd/system/

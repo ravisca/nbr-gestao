@@ -39,6 +39,7 @@ echo -e "${GREEN}Configuring service file with current user/path...${NC}"
 sed -i "s|User=ubuntu|User=${CURRENT_USER}|g" "$SERVICE_FILE"
 sed -i "s|Group=www-data|Group=${CURRENT_GROUP}|g" "$SERVICE_FILE"
 sed -i "s|WorkingDirectory=/home/ubuntu/nbr-gestao|WorkingDirectory=${PROJECT_DIR}|g" "$SERVICE_FILE"
+sed -i "s|EnvironmentFile=/home/ubuntu/nbr-gestao/.env|EnvironmentFile=${PROJECT_DIR}/.env|g" "$SERVICE_FILE"
 sed -i "s|ExecStart=/home/ubuntu/nbr-gestao/venv/bin/gunicorn|ExecStart=${PROJECT_DIR}/venv/bin/gunicorn|g" "$SERVICE_FILE"
 sed -i "s|Environment=\"PATH=/home/ubuntu/nbr-gestao/venv/bin\"|Environment=\"PATH=${PROJECT_DIR}/venv/bin\"|g" "$SERVICE_FILE"
 
