@@ -51,7 +51,32 @@ if [ -L "${SYSTEMD_DIR}/${SERVICE_NAME}.service" ]; then
 fi
 sudo ln -s "$SERVICE_FILE" "${SYSTEMD_DIR}/${SERVICE_NAME}.service"
 
-# Reload and Start
+# Check for Nginx
+echo -e "${GREEN}Installing/Checking Nginx...${NC}"
+sudo apt-get update
+sudo apt-get install -y nginx
+
+# Update Nginx Config
+NGINX_CONF="${PROJECT_DIR}/${SERVICE_NAME}.nginx"
+echo -e "${GREEN}Configuring Nginx...${NC}"
+sed -i "s|alias /home/ubuntu/nbr-gestao/staticfiles/|alias ${PROJECT_DIR}/staticfiles/|g" "$NGINX_CONF"
+sed -i "s|alias /home/ubuntu/nbr-gestao/media/|alias ${PROJECT_DIR}/media/|g" "$NGINX_CONF"
+
+# Link Nginx Config
+echo -e "${GREEN}Linking Nginx config...${NC}"
+sudo ln -sf "$NGINX_CONF" "/etc/nginx/sites-enabled/${SERVICE_NAME}"
+sudo rm -f /etc/nginx/sites-enabled/default
+
+# Collect Static Files
+echo -e "${GREEN}Collecting static files...${NC}"
+python manage.py collectstatic --noinput
+
+# Restart Nginx
+echo -e "${GREEN}Restarting Nginx...${NC}"
+sudo systemctl restart nginx
+sudo systemctl status nginx --no-pager
+
+# Reload and Start Systemd Service
 echo -e "${GREEN}Reloading systemd and starting service...${NC}"
 sudo systemctl daemon-reload
 sudo systemctl enable "${SERVICE_NAME}"
@@ -60,4 +85,5 @@ sudo systemctl restart "${SERVICE_NAME}"
 echo -e "${GREEN}Status:${NC}"
 sudo systemctl status "${SERVICE_NAME}" --no-pager
 
-echo -e "${GREEN}Setup Complete!${NC}"
+echo -e "${GREEN}Setup Complete! App should be available at http://$(curl -s ifconfig.me) or http://<SERVER_IP>${NC}"
+

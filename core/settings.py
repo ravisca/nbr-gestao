@@ -144,6 +144,9 @@ STATICFILES_DIRS = [
     BASE_DIR / "beneficiarios/static",
 ]
 
+# Pasta onde o comando collectstatic vai reunir todos os arquivos estáticos para produção
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
 # URL base para acessar os arquivos no navegador
 MEDIA_URL = '/media/'
 
