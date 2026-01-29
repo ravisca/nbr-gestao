@@ -1,0 +1,30 @@
+[Unit]
+Description=gunicorn daemon for nbr-gestao
+After=network.target
+
+[Service]
+# User and Group to run the service
+# REPLACE WITH ACTUAL USER/GROUP
+User=ubuntu
+Group=www-data
+
+# Working Directory
+# REPLACE WITH ACTUAL PATH
+WorkingDirectory=/home/ubuntu/nbr-gestao
+
+# Environment variables
+# It's recommended to use an env file, e.g., EnvironmentFile=/home/ubuntu/nbr-gestao/.env
+# Or export them here directly
+Environment="PATH=/home/ubuntu/nbr-gestao/venv/bin"
+Environment="DJANGO_SETTINGS_MODULE=core.settings"
+
+# Gunicorn command
+# We assume the venv is inside the project directory
+ExecStart=/home/ubuntu/nbr-gestao/venv/bin/gunicorn \
+          --access-logfile - \
+          --workers 3 \
+          --bind unix:/run/nbr-gestao.sock \
+          core.wsgi:application
+
+[Install]
+WantedBy=multi-user.target
