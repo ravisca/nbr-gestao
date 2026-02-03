@@ -176,3 +176,21 @@ sudo systemctl daemon-reload
 sudo systemctl enable nbr-gestao
 sudo systemctl start nbr-gestao
 ```
+
+## Migrando para PostgreSQL
+
+Se você quiser sair do SQLite e usar PostgreSQL, criamos scripts automáticos.
+
+1.  **Backup:** Garanta que seu `db.sqlite3` está na pasta do projeto.
+2.  **Execute o script de migração completa:**
+    ```bash
+    chmod +x migrate_to_postgres.sh
+    ./migrate_to_postgres.sh
+    ```
+    
+    O script irá:
+    *   Exportar os dados atuais.
+    *   Instalar e configurar o PostgreSQL.
+    *   Criar o banco de dados `nbr_gestao`.
+    *   Importar os dados para o novo banco.
+    *   Reiniciar a aplicação.
