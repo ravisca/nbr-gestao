@@ -1,5 +1,10 @@
 from django.contrib import admin
-from .models import Beneficiario
+from .models import Beneficiario, Turno
+
+@admin.register(Turno)
+class TurnoAdmin(admin.ModelAdmin):
+    list_display = ('nome',)
+    search_fields = ('nome',)
 
 @admin.register(Beneficiario)
 class BeneficiarioAdmin(admin.ModelAdmin):
