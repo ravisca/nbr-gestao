@@ -40,6 +40,16 @@ echo -e "${GREEN}2. Running PostgreSQL Setup (Installation & Config)...${NC}"
 chmod +x setup_postgres.sh
 ./setup_postgres.sh
 
+echo -e "${GREEN}2.5. Installing Python Dependencies (psycopg2)...${NC}"
+# Determine pip executable
+PIP_EXEC="pip"
+if [ -f "./venv/bin/pip" ]; then
+    PIP_EXEC="./venv/bin/pip"
+elif command -v pip3 &> /dev/null; then
+    PIP_EXEC="pip3"
+fi
+$PIP_EXEC install -r requirements.txt
+
 echo -e "${GREEN}3. Applying Migrations to new PostgreSQL DB...${NC}"
 $PYTHON_EXEC manage.py migrate
 
