@@ -50,6 +50,12 @@ elif command -v pip3 &> /dev/null; then
 fi
 $PIP_EXEC install -r requirements.txt
 
+# LOAD ENV VARS for the shell session
+echo -e "${GREEN}Loading environment variables from .env...${NC}"
+set -a
+source .env
+set +a
+
 echo -e "${GREEN}3. Applying Migrations to new PostgreSQL DB...${NC}"
 $PYTHON_EXEC manage.py migrate
 
