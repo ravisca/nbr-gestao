@@ -6,6 +6,16 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m'
 
+# Determine Python Executable
+PYTHON_EXEC="python"
+if [ -f "./venv/bin/python" ]; then
+    PYTHON_EXEC="./venv/bin/python"
+elif command -v python3 &> /dev/null; then
+    PYTHON_EXEC="python3"
+fi
+
+echo -e "Using Python executable: $PYTHON_EXEC"
+
 if [ ! -f "db.sqlite3" ]; then
     echo -e "${RED}Error: db.sqlite3 not found!${NC}"
     exit 1
@@ -17,7 +27,7 @@ echo -e "${GREEN}1. Dumping data from SQLite...${NC}"
 # So we assume .env is currently pointing to SQLite or we force it.
 
 # Running dumpdata
-python manage.py dumpdata --exclude auth.permission --exclude contenttypes > data_dump.json
+$PYTHON_EXEC manage.py dumpdata --exclude auth.permission --exclude contenttypes > data_dump.json
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}Data dumped successfully to data_dump.json${NC}"
@@ -31,10 +41,10 @@ chmod +x setup_postgres.sh
 ./setup_postgres.sh
 
 echo -e "${GREEN}3. Applying Migrations to new PostgreSQL DB...${NC}"
-python manage.py migrate
+$PYTHON_EXEC manage.py migrate
 
 echo -e "${GREEN}4. Loading Data into PostgreSQL...${NC}"
-python manage.py loaddata data_dump.json
+$PYTHON_EXEC manage.py loaddata data_dump.json
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}SUCCESS! Migrated to PostgreSQL.${NC}"
