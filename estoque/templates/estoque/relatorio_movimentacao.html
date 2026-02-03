@@ -1,0 +1,220 @@
+<!DOCTYPE HTML>
+<html lang="pt-br">
+
+<head>
+    <meta charset="utf-8">
+    <title>Relatório de Movimentação de Estoque</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1cm;
+        }
+
+        body {
+            font-family: Helvetica, sans-serif;
+            font-size: 9pt;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+        }
+
+        .section-title {
+            background-color: #eee;
+            padding: 5px;
+            font-weight: bold;
+            margin-top: 15px;
+            margin-bottom: 5px;
+            border-bottom: 1px solid #999;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }
+
+        th,
+        td {
+            border-bottom: 1px solid #ddd;
+            padding: 4px;
+            text-align: left;
+        }
+
+        th {
+            font-weight: bold;
+            font-size: 8pt;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .badge-success {
+            color: green;
+            font-weight: bold;
+        }
+
+        .badge-danger {
+            color: red;
+            font-weight: bold;
+        }
+
+        .signatures {
+            margin-top: 50px;
+            width: 100%;
+        }
+
+        .sig-line {
+            width: 40%;
+            border-top: 1px solid #000;
+            padding-top: 5px;
+            text-align: center;
+            display: inline-block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h2>ONG NBR - Relatório de Movimentação de Estoque</h2>
+        <p>Competência: {{ mes }}/{{ ano }}</p>
+        <small>Gerado em: {{ data_geracao|date:"d/m/Y H:i" }} | Por: {{ usuario.get_full_name }}</small>
+    </div>
+
+    <!-- 1. ENTRADAS GERAIS -->
+    <div class="section-title">1. ENTRADAS (Compras / Doações)</div>
+    <table>
+        <thead>
+            <tr>
+                <th width="15%">Data</th>
+                <th width="30%">Item</th>
+                <th width="15%" class="text-right">Quantidade</th>
+                <th width="40%">Origem / Observação</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in entradas %}
+            <tr>
+                <td>{{ m.data|date:"d/m/Y" }}</td>
+                <td>{{ m.item.nome }}</td>
+                <td class="text-right"><span class="badge-success">+ {{ m.quantidade }}</span> {{ m.item.unidade.sigla
+                    }}</td>
+                <td>{{ m.origem_destino|default:"-" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">Nenhuma entrada no período.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- 2. SAÍDAS GERAIS -->
+    <div class="section-title">2. SAÍDAS (Uso Interno / Consumo)</div>
+    <table>
+        <thead>
+            <tr>
+                <th width="15%">Data</th>
+                <th width="30%">Item</th>
+                <th width="15%" class="text-right">Quantidade</th>
+                <th width="40%">Destino / Observação</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in saidas %}
+            <tr>
+                <td>{{ m.data|date:"d/m/Y" }}</td>
+                <td>{{ m.item.nome }}</td>
+                <td class="text-right"><span class="badge-danger">- {{ m.quantidade }}</span> {{ m.item.unidade.sigla }}
+                </td>
+                <td>{{ m.origem_destino|default:"-" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">Nenhuma saída no período.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- 3. EMPRÉSTIMOS REALIZADOS -->
+    <div class="section-title">3. ITENS EMPRESTADOS (Saídas Temporárias)</div>
+    <table>
+        <thead>
+            <tr>
+                <th width="15%">Data Retirada</th>
+                <th width="30%">Item</th>
+                <th width="15%" class="text-right">Qtd. Levada</th>
+                <th width="40%">Solicitante</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for e in emprestimos_saida %}
+            <tr>
+                <td>{{ e.data_saida|date:"d/m/Y" }}</td>
+                <td>{{ e.item.nome }}</td>
+                <td class="text-right"><span class="badge-danger">- {{ e.quantidade_emprestada }}</span> {{
+                    e.item.unidade.sigla }}</td>
+                <td>{{ e.nome_solicitante }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">Nenhum empréstimo realizado no período.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- 4. DEVOLUÇÕES REGISTRADAS -->
+    <div class="section-title">4. DEVOLUÇÕES DE EMPRÉSTIMOS (Entradas)</div>
+    <table>
+        <thead>
+            <tr>
+                <th width="15%">Data Devolução</th>
+                <th width="30%">Item</th>
+                <th width="15%" class="text-right">Qtd. Devolvida</th>
+                <th width="40%">Solicitante / Observação</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for e in emprestimos_retorno %}
+            <tr>
+                <td>{{ e.data_devolucao|date:"d/m/Y" }}</td>
+                <td>{{ e.item.nome }}</td>
+                <td class="text-right"><span class="badge-success">+ {{ e.quantidade_devolvida }}</span> {{
+                    e.item.unidade.sigla }}</td>
+                <td>{{ e.nome_solicitante }} {% if e.motivo_falta %}(Obs: {{ e.motivo_falta }}){% endif %}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">Nenhuma devolução registrada no período.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- ASSINATURAS -->
+    <table class="signatures">
+        <tr>
+            <td align="center">
+                <div class="sig-line">
+                    <strong>Responsável Estoque</strong><br>
+                    Controle de Almoxarifado
+                </div>
+            </td>
+            <td align="center">
+                <div class="sig-line">
+                    <strong>Coordenação</strong><br>
+                    Visto
+                </div>
+            </td>
+        </tr>
+    </table>
+
+</body>
+
+</html>

@@ -2,7 +2,11 @@ from django.shortcuts import render
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .models import Item, Movimentacao
+from .models import Item, Movimentacao, Emprestimo
+from django.views import View
+from core.utils import render_to_pdf
+from django.utils import timezone
+
 
 class ItemListView(LoginRequiredMixin, ListView):
     model = Item
@@ -70,3 +74,34 @@ class MovimentacaoSaidaView(LoginRequiredMixin, CreateView):
         context = super().get_context_data(**kwargs)
         context['titulo'] = 'Nova Saída (Uso/Consumo)'
         return context
+
+class RelatorioEstoquePdfView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        hoje = timezone.now()
+        mes = request.GET.get('mes', hoje.strftime('%m'))
+        ano = request.GET.get('ano', hoje.year)
+
+        # 1. Entradas e Saídas (Model Movimentacao)
+        movimentacoes = Movimentacao.objects.filter(data__month=mes, data__year=ano).order_by('data')
+        entradas = movimentacoes.filter(tipo='ENTRADA')
+        saidas = movimentacoes.filter(tipo='SAIDA')
+
+        # 2. Empréstimos (Model Emprestimo)
+        # Empréstimos feitos no mês (data_saida)
+        emprestimos_saida = Emprestimo.objects.filter(data_saida__month=mes, data_saida__year=ano).order_by('data_saida')
+        
+        # Empréstimos devolvidos no mês (data_devolucao)
+        emprestimos_retorno = Emprestimo.objects.filter(data_devolucao__month=mes, data_devolucao__year=ano, devolvido=True).order_by('data_devolucao')
+
+        context = {
+            'entradas': entradas,
+            'saidas': saidas,
+            'emprestimos_saida': emprestimos_saida,
+            'emprestimos_retorno': emprestimos_retorno,
+            'mes': mes,
+            'ano': ano,
+            'data_geracao': hoje,
+            'usuario': request.user,
+        }
+
+        return render_to_pdf('estoque/relatorio_movimentacao.html', context)

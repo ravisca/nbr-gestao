@@ -12,4 +12,5 @@ urlpatterns = [
 
     # AJAX
     path('ajax/load-atividades/', views.load_atividades, name='ajax_load_atividades'),
+    path('ajax/load-turnos/', views.load_turnos, name='ajax_load_turnos'),
 ]

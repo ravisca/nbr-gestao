@@ -14,6 +14,7 @@ class Projeto(models.Model):
 class TipoAtividade(models.Model):
     projeto = models.ForeignKey(Projeto, on_delete=models.CASCADE, related_name="tipos_atividade")
     nome = models.CharField(max_length=100, verbose_name="Nome da Atividade (Ex: Treino, Aula)")
+    turnos = models.ManyToManyField('beneficiarios.Turno', verbose_name="Turnos Disponíveis", blank=True)
     
     def __str__(self):
         # Truque para o JavaScript filtrar depois: "Nome do Projeto | Nome da Atividade"

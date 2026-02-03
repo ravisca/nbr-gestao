@@ -108,3 +108,18 @@ def load_atividades(request):
     else:
         atividades = TipoAtividade.objects.none()
     return render(request, 'atividades/atividade_dropdown_list_options.html', {'atividades': atividades})
+
+@login_required
+def load_turnos(request):
+    atividade_id = request.GET.get('atividade')
+    from beneficiarios.models import Turno  # Local import to avoid circular dependencies if any
+    
+    if atividade_id:
+        try:
+            atividade = TipoAtividade.objects.get(pk=atividade_id)
+            turnos = atividade.turnos.all().order_by('nome')
+        except TipoAtividade.DoesNotExist:
+             turnos = Turno.objects.none()
+    else:
+        turnos = Turno.objects.none()
+    return render(request, 'atividades/turno_dropdown_list_options.html', {'turnos': turnos})

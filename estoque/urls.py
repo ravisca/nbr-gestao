@@ -8,4 +8,6 @@ urlpatterns = [
     
     path('movimentacao/entrada/', views.MovimentacaoEntradaView.as_view(), name='estoque_entrada'),
     path('movimentacao/saida/', views.MovimentacaoSaidaView.as_view(), name='estoque_saida'),
+    
+    path('relatorio/', views.RelatorioEstoquePdfView.as_view(), name='estoque_relatorio_movimentacao'),
 ]

@@ -11,10 +11,19 @@ class ProjetoForm(forms.ModelForm):
         }
 
 # Inline Formset para editar Atividades DENTRO da tela de Projetos
+class TipoAtividadeForm(forms.ModelForm):
+    class Meta:
+        model = TipoAtividade
+        fields = ['nome', 'turnos']
+        widgets = {
+            'turnos': forms.CheckboxSelectMultiple()
+        }
+
 TipoAtividadeFormSet = inlineformset_factory(
     Projeto, 
     TipoAtividade, 
-    fields=['nome'], 
+    form=TipoAtividadeForm,
+    fields=['nome', 'turnos'], 
     extra=1, 
     can_delete=True
 )

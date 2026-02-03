@@ -1,0 +1,4 @@
+<option value="">---------</option>
+{% for turno in turnos %}
+<option value="{{ turno.pk }}">{{ turno.nome }}</option>
+{% endfor %}

@@ -1,5 +1,5 @@
 from django import forms
-from .models import Beneficiario
+from .models import Beneficiario, Turno
 from atividades.models import TipoAtividade, Projeto
 
 class BeneficiarioForm(forms.ModelForm):
@@ -21,8 +21,17 @@ class BeneficiarioForm(forms.ModelForm):
                 'hx-swap': 'innerHTML'
             })
 
+        # HTMX Trigger: Quando mudar a atividade, recarrega o campo 'turno'
+        if 'atividade' in self.fields:
+            self.fields['atividade'].widget.attrs.update({
+                'hx-get': '/atividades/ajax/load-turnos/',
+                'hx-target': '#id_turno',
+                'hx-swap': 'innerHTML'
+            })
+
         # Filtragem Inicial (se já tiver projeto selecionado ou se for POST)
         self.fields['atividade'].queryset = TipoAtividade.objects.none()
+        self.fields['turno'].queryset = Turno.objects.none()
 
         if 'projeto' in self.data:
             try:
@@ -34,3 +43,14 @@ class BeneficiarioForm(forms.ModelForm):
             # Edição: carrega atividades do projeto salvo
             if self.instance.projeto_id:
                 self.fields['atividade'].queryset = self.instance.projeto.tipos_atividade.order_by('nome')
+
+        # Lógica para carregar TURNOS baseados na atividade
+        if 'atividade' in self.data:
+            try:
+                atividade_id = int(self.data.get('atividade'))
+                self.fields['turno'].queryset = Turno.objects.filter(tipoatividade__id=atividade_id).order_by('nome')
+            except (ValueError, TypeError):
+                pass
+        elif self.instance.pk:
+            if self.instance.atividade_id:
+                self.fields['turno'].queryset = self.instance.atividade.turnos.order_by('nome')

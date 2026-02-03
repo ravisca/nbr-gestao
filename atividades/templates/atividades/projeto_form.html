@@ -40,11 +40,14 @@
                     <div id="atividades-list">
                         {% for form_atividade in atividades %}
                         <div class="row align-items-center mb-2 atividade-item">
-                            <div class="col-md-10">
+                            <div class="col-md-5">
                                 {{ form_atividade.id }}
                                 {{ form_atividade.nome|as_crispy_field }}
                             </div>
-                            <div class="col-md-2 text-center pt-4">
+                            <div class="col-md-6">
+                                {{ form_atividade.turnos|as_crispy_field }}
+                            </div>
+                            <div class="col-md-1 text-center pt-4">
                                 {% if atividades.can_delete %}
                                 <div class="d-none">
                                     {{ form_atividade.DELETE }}
@@ -66,11 +69,14 @@
                     <!-- Template Oculto para Nova Linha -->
                     <div id="empty-form" style="display:none;">
                         <div class="row align-items-center mb-2 atividade-item">
-                            <div class="col-md-10">
+                            <div class="col-md-5">
                                 {{ atividades.empty_form.id }}
                                 {{ atividades.empty_form.nome|as_crispy_field }}
                             </div>
-                            <div class="col-md-2 text-center pt-4">
+                            <div class="col-md-6">
+                                {{ atividades.empty_form.turnos|as_crispy_field }}
+                            </div>
+                            <div class="col-md-1 text-center pt-4">
                                 <button type="button" class="btn btn-danger btn-sm remove-row"
                                     onclick="removeRow(this, true)">
                                     <i class="bi bi-x-lg"></i>
