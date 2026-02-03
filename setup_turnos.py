@@ -1,6 +1,16 @@
 import os
 import django
 
+# Carregar variáveis do .env se não estiverem definidas
+if not os.getenv('DB_ENGINE') and os.path.exists('.env'):
+    print("--- Carregando variáveis de ambiente do .env ---")
+    with open('.env') as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                key, value = line.split('=', 1)
+                os.environ[key.strip()] = value.strip()
+
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 django.setup()
 
