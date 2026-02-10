@@ -30,7 +30,6 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function () {
         $('#id_projeto').change(function () {
@@ -45,10 +44,12 @@
                     },
                     success: function (data) {
                         $("#id_item").html(data);
+                        $("#id_item").trigger('change'); // Atualiza o Select2
                     }
                 });
             } else {
                 $("#id_item").html('<option value="">---------</option>');
+                $("#id_item").trigger('change');
             }
         });
     });

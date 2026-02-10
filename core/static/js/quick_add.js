@@ -70,7 +70,13 @@ document.addEventListener('DOMContentLoaded', function () {
                                     if (select) {
                                         const option = new Option(data.name, data.id, true, true);
                                         select.add(option);
-                                        select.dispatchEvent(new Event('change')); // Trigger change for any listeners
+
+                                        // Trigger change for Select2 (jQuery) and native listeners
+                                        if (window.jQuery) {
+                                            window.jQuery(select).trigger('change');
+                                        } else {
+                                            select.dispatchEvent(new Event('change'));
+                                        }
                                     }
                                 } else {
                                     // Show errors (simple replace of body for now)
