@@ -1,4 +1,5 @@
 <!DOCTYPE HTML>
+{% load static %}
 <html lang="pt-br">
 
 <head>
@@ -20,6 +21,15 @@
             margin-bottom: 20px;
             border-bottom: 2px solid #000;
             padding-bottom: 10px;
+            position: relative;
+            min-height: 60px;
+        }
+
+        .logo {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 180px;
         }
 
         table {
@@ -46,9 +56,10 @@
 
 <body>
     <div class="header">
-        <h2>ONG NBR - Lista Completa de Beneficiários</h2>
-        <p>Gerado em: {{ data_geracao|date:"d/m/Y H:i" }} | Por: {{ usuario.get_full_name|default:usuario.username }}
-        </p>
+        <img src="{% static 'img/logo.png' %}" class="logo">
+        <h2 style="margin: 0;">ONG NBR - Lista Completa de Beneficiários</h2>
+        <p style="margin: 5px 0;">Gerado em: {{ data_geracao|date:"d/m/Y H:i" }} | Por: {{
+            usuario.get_full_name|default:usuario.username }}</p>
     </div>
 
     <table>

@@ -20,7 +20,11 @@ from .views import HomeView, UsuarioListView, UsuarioCreateView
 from django.conf import settings
 from django.conf.urls.static import static
 
+from django.views.generic.base import RedirectView
+from django.contrib.staticfiles.storage import staticfiles_storage
+
 urlpatterns = [
+    path('favicon.ico', RedirectView.as_view(url='/static/img/favicon.png')),
     path('admin/', admin.site.urls),
     path('accounts/', include('django.contrib.auth.urls')), # URLs de Autenticação (Login, Logout, Password Reset)
     path('', HomeView.as_view(), name='home'),
