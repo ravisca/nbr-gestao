@@ -7,7 +7,8 @@
 <div class="row justify-content-center">
     <div class="col-md-6">
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-{{ 'Entrada' in titulo|yesno:'success,danger' }} text-white py-3">
+            <div
+                class="card-header {% if 'Entrada' in titulo %}bg-success{% else %}bg-danger{% endif %} text-white py-3">
                 <h4 class="mb-0"><i class="bi bi-arrow-left-right"></i> {{ titulo }}</h4>
             </div>
             <div class="card-body">
@@ -18,7 +19,8 @@
 
                     <div class="d-flex justify-content-end gap-2 mt-4">
                         <a href="{% url 'estoque_list' %}" class="btn btn-outline-secondary">Cancelar</a>
-                        <button type="submit" class="btn btn-{{ 'Entrada' in titulo|yesno:'success,danger' }}">
+                        <button type="submit"
+                            class="btn {% if 'Entrada' in titulo %}btn-success{% else %}btn-danger{% endif %}">
                             Confirmar Movimentação
                         </button>
                     </div>

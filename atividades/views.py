@@ -7,7 +7,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db import transaction
 
 from .models import RegistroAtividade, Projeto, TipoAtividade
-from .forms import ProjetoForm, TipoAtividadeFormSet, RegistroAtividadeForm
+from .forms import ProjetoForm, TipoAtividadeFormSet, RegistroAtividadeForm, NaturezaDespesaFormSet
 
 # --- Permissões ---
 def eh_monitor_ou_admin(user):
@@ -36,19 +36,26 @@ class ProjetoCreateView(LoginRequiredMixin, AdminRequiredMixin, CreateView):
         data = super().get_context_data(**kwargs)
         if self.request.POST:
             data['atividades'] = TipoAtividadeFormSet(self.request.POST)
+            data['naturezas'] = NaturezaDespesaFormSet(self.request.POST)
         else:
             data['atividades'] = TipoAtividadeFormSet()
+            data['naturezas'] = NaturezaDespesaFormSet()
         data['titulo'] = 'Novo Projeto'
         return data
 
     def form_valid(self, form):
         context = self.get_context_data()
         atividades = context['atividades']
+        naturezas = context['naturezas']
         with transaction.atomic():
             self.object = form.save()
-            if atividades.is_valid():
+            if atividades.is_valid() and naturezas.is_valid():
                 atividades.instance = self.object
                 atividades.save()
+                naturezas.instance = self.object
+                naturezas.save()
+            else:
+                return self.render_to_response(self.get_context_data(form=form)) # Retorna com erros
         return super().form_valid(form)
 
 class ProjetoUpdateView(LoginRequiredMixin, AdminRequiredMixin, UpdateView):
@@ -61,18 +68,24 @@ class ProjetoUpdateView(LoginRequiredMixin, AdminRequiredMixin, UpdateView):
         data = super().get_context_data(**kwargs)
         if self.request.POST:
             data['atividades'] = TipoAtividadeFormSet(self.request.POST, instance=self.object)
+            data['naturezas'] = NaturezaDespesaFormSet(self.request.POST, instance=self.object)
         else:
             data['atividades'] = TipoAtividadeFormSet(instance=self.object)
+            data['naturezas'] = NaturezaDespesaFormSet(instance=self.object)
         data['titulo'] = 'Editar Projeto'
         return data
 
     def form_valid(self, form):
         context = self.get_context_data()
         atividades = context['atividades']
+        naturezas = context['naturezas']
         with transaction.atomic():
             self.object = form.save()
-            if atividades.is_valid():
+            if atividades.is_valid() and naturezas.is_valid():
                 atividades.save()
+                naturezas.save()
+            else:
+                return self.render_to_response(self.get_context_data(form=form))
         return super().form_valid(form)
 
 # --- Views Operacionais (Mobile) ---

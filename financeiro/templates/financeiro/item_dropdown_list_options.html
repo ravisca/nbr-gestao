@@ -1,0 +1,5 @@
+<option value="">---------</option>
+{% for item in itens %}
+<option value="{{ item.pk }}">{{ item.natureza.codigo }} - {{ item.natureza.nome }} > {{ item.codigo }} - {{ item.nome}}
+</option>
+{% endfor %}

@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="pt-br">
 
@@ -210,6 +211,7 @@
             document.getElementById('sidebar').classList.toggle('show');
         }
     </script>
+    <script src="{% static 'js/quick_add.js' %}"></script>
     {% block extra_js %}{% endblock %}
 </body>
 

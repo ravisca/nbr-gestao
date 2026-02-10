@@ -24,7 +24,9 @@ class Beneficiario(models.Model):
     nome_completo = models.CharField(max_length=200, verbose_name="Nome Completo")
     data_nascimento = models.DateField(verbose_name="Data de Nascimento")
     cpf = models.CharField(max_length=14, unique=True, verbose_name="CPF")
+    cpf = models.CharField(max_length=14, unique=True, verbose_name="CPF")
     telefone = models.CharField(max_length=20, verbose_name="Telefone para Contato")
+    foto = models.ImageField(upload_to='beneficiarios/fotos/%Y/%m/', blank=True, null=True, verbose_name="Foto do Beneficiário")
 
     # Saúde e Acessibilidade
     tem_problema_saude = models.BooleanField(default=False, verbose_name="Possui Quadro de Saúde?")

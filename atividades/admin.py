@@ -14,7 +14,7 @@ class TipoAtividadeInline(admin.TabularInline):
 
 @admin.register(Projeto)
 class ProjetoAdmin(admin.ModelAdmin):
-    list_display = ('nome', 'ativo')
+    list_display = ('nome', 'cor', 'ativo')
     inlines = [TipoAtividadeInline]
 
 @admin.register(RegistroAtividade)

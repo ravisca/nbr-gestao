@@ -14,7 +14,7 @@ class BeneficiarioAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('Identificação', {
-            'fields': ('nome_completo', 'cpf', 'data_nascimento', 'telefone')
+            'fields': ('nome_completo', 'cpf', 'data_nascimento', 'telefone', 'foto')
         }),
         ('Saúde', {
             'fields': ('tem_problema_saude', 'descricao_saude')

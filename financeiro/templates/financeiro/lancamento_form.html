@@ -28,3 +28,29 @@
     </div>
 </div>
 {% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('#id_projeto').change(function () {
+            var url = "{% url 'ajax_load_itens' %}";
+            var projetoId = $(this).val();
+
+            if (projetoId) {
+                $.ajax({
+                    url: url,
+                    data: {
+                        'projeto': projetoId
+                    },
+                    success: function (data) {
+                        $("#id_item").html(data);
+                    }
+                });
+            } else {
+                $("#id_item").html('<option value="">---------</option>');
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -3,8 +3,42 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
+from django.db import models
+from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+
+# --- NOVO: Estrutura de Despesas (Natureza -> Item) ---
+class NaturezaDespesa(models.Model):
+    projeto = models.ForeignKey('atividades.Projeto', on_delete=models.PROTECT, verbose_name="Projeto")
+    codigo = models.CharField(max_length=20, verbose_name="Código (Ex: 1, 2.1)")
+    nome = models.CharField(max_length=100, verbose_name="Nome da Natureza (Ex: RH, Material)")
+
+    def __str__(self):
+        return f"{self.codigo} - {self.nome}"
+
+    class Meta:
+        verbose_name = "Natureza de Despesa"
+        verbose_name_plural = "Naturezas de Despesa"
+        ordering = ['codigo']
+
+class ItemDespesa(models.Model):
+    natureza = models.ForeignKey(NaturezaDespesa, on_delete=models.CASCADE, verbose_name="Natureza Pai", related_name="itens")
+    codigo = models.CharField(max_length=20, verbose_name="Código (Ex: 1.1, 1.2)")
+    nome = models.CharField(max_length=100, verbose_name="Nome do Item (Ex: Equipe de Basquete)")
+
+    def __str__(self):
+        return f"{self.codigo} - {self.nome}"
+
+    class Meta:
+        verbose_name = "Item de Despesa"
+        verbose_name_plural = "Itens de Despesa"
+        ordering = ['codigo']
+
 class Conta(models.Model):
-    nome = models.CharField(max_length=100, verbose_name="Nome da Conta (Ex: Banco Brasil, Caixa)")
+    # Vínculo opcional: Se for conta de projeto, tem projeto. Se for Geral, não.
+    projeto = models.OneToOneField('atividades.Projeto', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Projeto Vinculado")
+    nome = models.CharField(max_length=100, verbose_name="Nome da Conta (Ex: Banco Brasil, Projeto X)")
     saldo_inicial = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     saldo_atual = models.DecimalField(max_digits=10, decimal_places=2, default=0, editable=False)
     
@@ -22,6 +56,8 @@ class CategoriaReceita(models.Model):
         verbose_name = "Categoria de Receita"
         verbose_name_plural = "Categorias de Receita"
 
+# Mantamos Rubrica apenas se quiser manter histórico, mas a nova lógica usa ItemDespesa.
+# Vou comentar para não apagar dados se existirem, mas o ideal é migrar.
 class Rubrica(models.Model):
     nome = models.CharField(max_length=100, unique=True, verbose_name="Nome da Rúbrica")
     descricao = models.TextField(blank=True, null=True, verbose_name="Descrição")
@@ -30,10 +66,9 @@ class Rubrica(models.Model):
         return self.nome
 
     class Meta:
-        verbose_name = "Rúbrica"
-        verbose_name_plural = "Rúbricas"
+        verbose_name = "Rúbrica (Legado)"
+        verbose_name_plural = "Rúbricas (Legado)"
 
-# --- TABELA 1: ENTRADAS (Simples) ---
 class Receita(models.Model):
     conta = models.ForeignKey(Conta, on_delete=models.PROTECT, verbose_name="Conta de Entrada")
     categoria = models.ForeignKey(CategoriaReceita, on_delete=models.PROTECT, verbose_name="Categoria")
@@ -66,9 +101,19 @@ class Despesa(models.Model):
         ('09', 'Setembro'), ('10', 'Outubro'), ('11', 'Novembro'), ('12', 'Dezembro'),
     ]
 
-    # Vínculos
-    conta = models.ForeignKey(Conta, on_delete=models.PROTECT, verbose_name="Saiu de qual conta?")
+    # Nova Lógica: A partir do ITEM sabemos a Natureza e o Projeto.
+    # O Projeto sabe a conta.
+    item = models.ForeignKey(ItemDespesa, on_delete=models.PROTECT, verbose_name="Item de Despesa", null=True, blank=True)
+    
+    # Mantemos projeto explícito para facilitar queries, mas ele deve bater com item.natureza.projeto
     projeto = models.ForeignKey('atividades.Projeto', on_delete=models.PROTECT, verbose_name="Projeto Relacionado")
+    
+    # Conta é inferida, mas podemos salvar para histórico. 
+    # Vou deixar opcional, preenchido no save()
+    conta = models.ForeignKey(Conta, on_delete=models.PROTECT, verbose_name="Saiu de qual conta?", null=True, blank=True)
+    
+    # Campo legado, pode ser null agora
+    rubrica = models.ForeignKey(Rubrica, on_delete=models.PROTECT, verbose_name="Rúbrica (Legado)", null=True, blank=True)
     
     # Dados Fiscais Obrigatórios
     razao_social = models.CharField(max_length=200, verbose_name="Razão Social (Fornecedor)")
@@ -77,8 +122,6 @@ class Despesa(models.Model):
     serie = models.CharField(max_length=10, verbose_name="Série", blank=True, null=True)
     data_emissao = models.DateField(verbose_name="Dt. Emissão")
     
-    # Classificação
-    rubrica = models.ForeignKey(Rubrica, on_delete=models.PROTECT, verbose_name="Rúbrica (Ex: Material Consumo, RH)")
     valor = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Valor (R$)")
     
     # Competência
@@ -100,14 +143,26 @@ class Despesa(models.Model):
         verbose_name_plural = "Despesas"
 
     def clean(self):
-        # Validação: Não pode gastar o que não tem
         if not self.pk:
-            if self.conta.saldo_atual < self.valor:
+            # Tenta inferir a conta do projeto se não foi passada
+            if not self.conta and self.projeto:
+                if hasattr(self.projeto, 'conta'):
+                    self.conta = self.projeto.conta
+                else:
+                    raise ValidationError(f"O Projeto '{self.projeto.nome}' não possui uma Conta vinculada!")
+
+            if self.conta and self.conta.saldo_atual < self.valor:
                 raise ValidationError(f"Saldo Insuficiente na conta '{self.conta.nome}'! Disponível: R$ {self.conta.saldo_atual}")
 
     def save(self, *args, **kwargs):
         is_new = self.pk is None
-        if is_new:
+        
+        # Garante vínculo de conta antes de salvar
+        if not self.conta and self.projeto and hasattr(self.projeto, 'conta'):
+            self.conta = self.projeto.conta
+            
+        if is_new and self.conta:
             self.conta.saldo_atual -= self.valor
             self.conta.save()
+            
         super().save(*args, **kwargs)

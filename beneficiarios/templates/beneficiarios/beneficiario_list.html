@@ -54,7 +54,7 @@
                     <td>{{ b.idade }} anos</td>
                     <td>{{ b.telefone }}</td>
                     <td>
-                        <span class="badge bg-info text-dark">{{ b.projeto }}</span>
+                        <span class="badge text-dark border" style="background-color: {{ b.projeto.cor|default:'#FFFFFF' }};">{{ b.projeto }}</span>
                         <small class="text-muted d-block">{{ b.turno }}</small>
                     </td>
                     <td>

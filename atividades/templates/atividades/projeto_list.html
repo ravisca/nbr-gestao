@@ -16,7 +16,11 @@
         <div class="card h-100 shadow-sm border-0">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-start">
-                    <h5 class="card-title text-primary">{{ projeto.nome }}</h5>
+                    <h5 class="card-title text-primary">
+                        <span class="d-inline-block rounded-circle me-2 border"
+                            style="width: 15px; height: 15px; background-color: {{ projeto.cor|default:'#FFFFFF' }};"></span>
+                        {{ projeto.nome }}
+                    </h5>
                     {% if projeto.ativo %}
                     <span class="badge bg-success">Ativo</span>
                     {% else %}

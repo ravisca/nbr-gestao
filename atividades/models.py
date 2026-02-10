@@ -5,6 +5,7 @@ from django.core.validators import FileExtensionValidator
 class Projeto(models.Model):
     nome = models.CharField(max_length=100, verbose_name="Nome do Projeto")
     descricao = models.TextField(verbose_name="Descrição", blank=True, null=True)
+    cor = models.CharField(max_length=7, default="#FFFFFF", verbose_name="Cor de Identificação", help_text="Cor em Hexadecimal (ex: #FF0000)")
     ativo = models.BooleanField(default=True)
 
     def __str__(self):

@@ -16,8 +16,11 @@
 
                     <h5 class="mb-3 text-secondary">Dados do Projeto</h5>
                     <div class="row">
-                        <div class="col-md-8">
+                        <div class="col-md-6">
                             {{ form.nome|as_crispy_field }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ form.cor|as_crispy_field }}
                         </div>
                         <div class="col-md-4">
                             {{ form.ativo|as_crispy_field }}
@@ -29,14 +32,15 @@
 
                     <hr class="my-4">
 
+                    <hr class="my-4">
+
                     <h5 class="mb-3 text-secondary">Atividades do Projeto</h5>
                     <div class="alert alert-light border">
                         <small class="text-muted"><i class="bi bi-info-circle"></i> Adicione aqui as atividades (ex:
-                            Treino, Aula, Oficina) que pertencem a este projeto.</small>
+                            Treino, Aula, Oficina).</small>
                     </div>
 
                     {{ atividades.management_form }}
-
                     <div id="atividades-list">
                         {% for form_atividade in atividades %}
                         <div class="row align-items-center mb-2 atividade-item">
@@ -49,24 +53,58 @@
                             </div>
                             <div class="col-md-1 text-center pt-4">
                                 {% if atividades.can_delete %}
-                                <div class="d-none">
-                                    {{ form_atividade.DELETE }}
-                                </div>
-                                <button type="button" class="btn btn-danger btn-sm remove-row"
-                                    onclick="removeRow(this, false)">
-                                    <i class="bi bi-x-lg"></i>
-                                </button>
+                                <div class="d-none">{{ form_atividade.DELETE }}</div> <!-- Esconde Checkbox -->
+                                <button type="button" class="btn btn-danger btn-sm remove-row"><i
+                                        class="bi bi-x-lg"></i></button>
                                 {% endif %}
                             </div>
                         </div>
                         {% endfor %}
                     </div>
+                    <button type="button" id="add-atividade" class="btn btn-outline-primary btn-sm mt-2"><i
+                            class="bi bi-plus-circle"></i> Adicionar Atividade</button>
 
-                    <button type="button" id="add-atividade" class="btn btn-outline-primary btn-sm mt-2">
-                        <i class="bi bi-plus-circle"></i> Adicionar Atividade
-                    </button>
+                    <hr class="my-4">
 
-                    <!-- Template Oculto para Nova Linha -->
+                    <h5 class="mb-3 text-secondary">Estrutura Financeira (Naturezas & Itens)</h5>
+                    <div class="alert alert-light border">
+                        <small class="text-muted"><i class="bi bi-cash-stack"></i> Cadastre as naturezas de despesa (Ex:
+                            RH, Material). No campo "Itens Rápidos", digite os itens separados por vírgula (Ex: Monitor,
+                            Bola).</small>
+                    </div>
+
+                    {{ naturezas.management_form }}
+                    <div id="naturezas-list">
+                        {% for form_natureza in naturezas %}
+                        <div class="card mb-3 border-light bg-light">
+                            <div class="card-body">
+                                <div class="row align-items-start">
+                                    <div class="col-md-2">
+                                        {{ form_natureza.id }}
+                                        {{ form_natureza.codigo|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-4">
+                                        {{ form_natureza.nome|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-5">
+                                        {{ form_natureza.novos_itens|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-1 text-center pt-4">
+                                        {% if naturezas.can_delete %}
+                                        <div class="d-none">{{ form_natureza.DELETE }}</div>
+                                        <button type="button" class="btn btn-danger btn-sm remove-row-natureza"><i
+                                                class="bi bi-trash"></i></button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <button type="button" id="add-natureza" class="btn btn-outline-success btn-sm mt-2"><i
+                            class="bi bi-plus-circle"></i> Adicionar Natureza</button>
+
+                    <!-- Templates Ocultos -->
                     <div id="empty-form" style="display:none;">
                         <div class="row align-items-center mb-2 atividade-item">
                             <div class="col-md-5">
@@ -77,16 +115,38 @@
                                 {{ atividades.empty_form.turnos|as_crispy_field }}
                             </div>
                             <div class="col-md-1 text-center pt-4">
-                                <button type="button" class="btn btn-danger btn-sm remove-row"
-                                    onclick="removeRow(this, true)">
-                                    <i class="bi bi-x-lg"></i>
-                                </button>
+                                <button type="button" class="btn btn-danger btn-sm remove-row"><i
+                                        class="bi bi-x-lg"></i></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="empty-form-natureza" style="display:none;">
+                        <div class="card mb-3 border-light bg-light">
+                            <div class="card-body">
+                                <div class="row align-items-start">
+                                    <div class="col-md-2">
+                                        {{ naturezas.empty_form.id }}
+                                        {{ naturezas.empty_form.codigo|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-4">
+                                        {{ naturezas.empty_form.nome|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-5">
+                                        {{ naturezas.empty_form.novos_itens|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-1 text-center pt-4">
+                                        <button type="button" class="btn btn-danger btn-sm remove-row-natureza"><i
+                                                class="bi bi-trash"></i></button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <script>
                         document.addEventListener('DOMContentLoaded', function () {
+                            // --- Lógica Atividades ---
                             const addBtn = document.getElementById('add-atividade');
                             const list = document.getElementById('atividades-list');
                             const emptyForm = document.getElementById('empty-form').firstElementChild;
@@ -95,31 +155,51 @@
                             addBtn.addEventListener('click', function () {
                                 const newForm = emptyForm.cloneNode(true);
                                 const currentForms = parseInt(totalForms.value);
-
-                                // Atualiza os índices do novo form
                                 newForm.innerHTML = newForm.innerHTML.replace(/__prefix__/g, currentForms);
-
                                 list.appendChild(newForm);
                                 totalForms.value = currentForms + 1;
                             });
-                        });
 
-                        function removeRow(btn, isNew) {
-                            if (isNew) {
-                                // Se é novo (não salvo), remove direto do DOM
-                                btn.closest('.atividade-item').remove();
-                            } else {
-                                // Se já existe, pede confirmação
-                                if (confirm('Tem certeza que deseja excluir esta atividade?')) {
-                                    const row = btn.closest('.atividade-item');
-                                    const deleteCheckbox = row.querySelector('input[type=checkbox][name$="-DELETE"]');
-                                    if (deleteCheckbox) {
-                                        deleteCheckbox.checked = true;
-                                        row.style.display = 'none'; // Esconde a linha
+                            document.addEventListener('click', function (e) {
+                                if (e.target && (e.target.classList.contains('remove-row') || e.target.closest('.remove-row'))) {
+                                    const row = e.target.closest('.row'); // Pega a linha
+                                    const deleteInput = row.querySelector('input[name$="-DELETE"]');
+                                    if (deleteInput) {
+                                        deleteInput.checked = true;
+                                        row.style.display = 'none';
+                                    } else {
+                                        row.remove(); // Se é novo e não salvou, remove do DOM
                                     }
                                 }
-                            }
-                        }
+                            });
+
+                            // --- Lógica Naturezas ---
+                            const addNatBtn = document.getElementById('add-natureza');
+                            const listNat = document.getElementById('naturezas-list');
+                            const emptyFormNat = document.getElementById('empty-form-natureza').firstElementChild;
+                            const totalFormsNat = document.getElementById('id_naturezadespesa_set-TOTAL_FORMS');
+
+                            addNatBtn.addEventListener('click', function () {
+                                const newForm = emptyFormNat.cloneNode(true);
+                                const currentForms = parseInt(totalFormsNat.value);
+                                newForm.innerHTML = newForm.innerHTML.replace(/__prefix__/g, currentForms);
+                                listNat.appendChild(newForm);
+                                totalFormsNat.value = currentForms + 1;
+                            });
+
+                            document.addEventListener('click', function (e) {
+                                if (e.target && (e.target.classList.contains('remove-row-natureza') || e.target.closest('.remove-row-natureza'))) {
+                                    const row = e.target.closest('.card'); // Natureza é um card
+                                    const deleteInput = row.querySelector('input[name$="-DELETE"]');
+                                    if (deleteInput) {
+                                        deleteInput.checked = true;
+                                        row.style.display = 'none';
+                                    } else {
+                                        row.remove();
+                                    }
+                                }
+                            });
+                        });
                     </script>
 
                     <div class="d-flex justify-content-end mt-4">

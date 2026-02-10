@@ -21,10 +21,12 @@ class ItemListView(LoginRequiredMixin, ListView):
             queryset = queryset.filter(nome__icontains=busca)
         return queryset.order_by('nome')
 
+from .forms import ItemForm
+
 class ItemCreateView(LoginRequiredMixin, CreateView):
     model = Item
+    form_class = ItemForm
     template_name = 'estoque/item_form.html'
-    fields = '__all__'
     success_url = reverse_lazy('estoque_list')
     
     def get_context_data(self, **kwargs):
@@ -34,8 +36,8 @@ class ItemCreateView(LoginRequiredMixin, CreateView):
 
 class ItemUpdateView(LoginRequiredMixin, UpdateView):
     model = Item
+    form_class = ItemForm
     template_name = 'estoque/item_form.html'
-    fields = '__all__'
     success_url = reverse_lazy('estoque_list')
 
     def get_context_data(self, **kwargs):
@@ -105,3 +107,39 @@ class RelatorioEstoquePdfView(LoginRequiredMixin, View):
         }
 
         return render_to_pdf('estoque/relatorio_movimentacao.html', context)
+
+
+# --- QUICK ADD VIEWS ---
+from django.http import JsonResponse, HttpResponse
+from django.template.loader import render_to_string
+from .models import Categoria, UnidadeMedida
+from django.forms import modelform_factory
+
+class GenericPopupCreateView(View):
+    model = None
+    fields = '__all__'
+    title = "Adicionar"
+
+    def get(self, request, *args, **kwargs):
+        FormClass = modelform_factory(self.model, fields=self.fields)
+        form = FormClass()
+        return HttpResponse(render_to_string('estoque/quick_add_form.html', {'form': form, 'titulo': self.title, 'action_url': request.path}, request=request))
+
+    def post(self, request, *args, **kwargs):
+        FormClass = modelform_factory(self.model, fields=self.fields)
+        form = FormClass(request.POST)
+        if form.is_valid():
+            obj = form.save()
+            return JsonResponse({'success': True, 'id': obj.id, 'name': str(obj)})
+        else:
+            return JsonResponse({'success': False, 'form_html': render_to_string('estoque/quick_add_form.html', {'form': form, 'titulo': self.title, 'action_url': request.path}, request=request)})
+
+class CategoriaCreatePopup(GenericPopupCreateView):
+    model = Categoria
+    fields = ['nome']
+    title = "Nova Categoria"
+
+class UnidadeCreatePopup(GenericPopupCreateView):
+    model = UnidadeMedida
+    fields = ['nome', 'sigla']
+    title = "Nova Unidade de Medida"

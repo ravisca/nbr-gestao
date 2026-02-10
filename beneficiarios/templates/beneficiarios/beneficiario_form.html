@@ -11,7 +11,7 @@
                 <h4 class="mb-0">{{ titulo }}</h4>
             </div>
             <div class="card-body">
-                <form method="post">
+                <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
 
                     <h5 class="text-primary mb-3">Dados Pessoais</h5>
@@ -20,6 +20,7 @@
                         <div class="col-md-3">{{ form.data_nascimento|as_crispy_field }}</div>
                         <div class="col-md-3">{{ form.cpf|as_crispy_field }}</div>
                         <div class="col-md-6">{{ form.telefone|as_crispy_field }}</div>
+                        <div class="col-md-6">{{ form.foto|as_crispy_field }}</div>
                     </div>
 
                     <!-- Dados do Responsável (Condicional < 18 anos) -->

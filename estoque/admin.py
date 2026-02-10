@@ -1,11 +1,16 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from datetime import date
-from .models import Categoria, Item, Movimentacao, Emprestimo
+from .models import Categoria, UnidadeMedida, Item, Movimentacao, Emprestimo
 
 @admin.register(Categoria)
 class CategoriaAdmin(admin.ModelAdmin):
     search_fields = ['nome']
+
+@admin.register(UnidadeMedida)
+class UnidadeMedidaAdmin(admin.ModelAdmin):
+    search_fields = ['nome', 'sigla']
+    list_display = ('nome', 'sigla')
 
 @admin.register(Item)
 class ItemAdmin(admin.ModelAdmin):

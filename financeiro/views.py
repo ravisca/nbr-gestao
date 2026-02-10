@@ -2,7 +2,8 @@ from django.shortcuts import render
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView, CreateView, View
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .models import Conta, Receita, Despesa
+from .models import Conta, Receita, Despesa, ItemDespesa
+from .forms import DespesaForm
 from core.utils import render_to_pdf
 from django.utils import timezone
 from django.db.models import Sum
@@ -35,8 +36,8 @@ class ReceitaCreateView(LoginRequiredMixin, CreateView):
 
 class DespesaCreateView(LoginRequiredMixin, CreateView):
     model = Despesa
+    form_class = DespesaForm
     template_name = 'financeiro/lancamento_form.html'
-    fields = ['conta', 'projeto', 'razao_social', 'cnpj', 'nota_fiscal', 'serie', 'data_emissao', 'rubrica', 'valor', 'mes_referencia', 'ano_referencia', 'observacoes', 'comprovante']
     success_url = reverse_lazy('financeiro_dashboard')
 
     def form_valid(self, form):
@@ -78,3 +79,11 @@ class RelatorioFinanceiroPdfView(LoginRequiredMixin, View):
         }
         
         return render_to_pdf('financeiro/relatorio_prestacao.html', context)
+
+def load_itens_despesa(request):
+    projeto_id = request.GET.get('projeto')
+    itens = []
+    if projeto_id:
+        # Traz itens ordenados por natureza
+        itens = ItemDespesa.objects.filter(natureza__projeto_id=projeto_id).order_by('natureza__codigo', 'codigo')
+    return render(request, 'financeiro/item_dropdown_list_options.html', {'itens': itens})
