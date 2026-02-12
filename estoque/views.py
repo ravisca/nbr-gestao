@@ -112,7 +112,7 @@ class RelatorioEstoquePdfView(LoginRequiredMixin, View):
 # --- QUICK ADD VIEWS ---
 from django.http import JsonResponse, HttpResponse
 from django.template.loader import render_to_string
-from .models import Categoria, UnidadeMedida
+from .models import Item, Movimentacao, Categoria, UnidadeMedida, Emprestimo
 from django.forms import modelform_factory
 
 class GenericPopupCreateView(View):
@@ -143,3 +143,73 @@ class UnidadeCreatePopup(GenericPopupCreateView):
     model = UnidadeMedida
     fields = ['nome', 'sigla']
     title = "Nova Unidade de Medida"
+
+from django.forms import formset_factory
+from django.shortcuts import redirect
+from .forms import MovimentacaoSaidaItemForm, SaidaOptionsForm
+
+class MovimentacaoSaidaLoteView(LoginRequiredMixin, View):
+    template_name = 'estoque/movimentacao_saida_lote.html'
+    
+    def get(self, request):
+        # Cria um formset com 1 formulário inicial
+        MovimentacaoFormSet = formset_factory(MovimentacaoSaidaItemForm, extra=1)
+        formset = MovimentacaoFormSet()
+        
+        # Formulário de Opções (Empréstimo)
+        options_form = SaidaOptionsForm()
+        
+        return render(request, self.template_name, {
+            'formset': formset, 
+            'options_form': options_form,
+            'titulo': 'Saída em Lote / Empréstimo Interno'
+        })
+    
+    def post(self, request):
+        MovimentacaoFormSet = formset_factory(MovimentacaoSaidaItemForm)
+        formset = MovimentacaoFormSet(request.POST)
+        options_form = SaidaOptionsForm(request.POST)
+        
+        if formset.is_valid() and options_form.is_valid():
+            is_emprestimo = options_form.cleaned_data.get('is_emprestimo')
+            
+            # Dados do Empréstimo (se houver)
+            nome_solicitante = options_form.cleaned_data.get('nome_solicitante')
+            contato = options_form.cleaned_data.get('contato')
+            data_prevista = options_form.cleaned_data.get('data_prevista')
+            
+            for form in formset:
+                if form.cleaned_data: # Ignora formulários vazios
+                    item = form.cleaned_data['item']
+                    quantidade = form.cleaned_data['quantidade']
+                    
+                    if is_emprestimo:
+                        # Cria EMPRÉSTIMO
+                        Emprestimo.objects.create(
+                            item=item,
+                            quantidade_emprestada=int(quantidade), # Garante int
+                            nome_solicitante=nome_solicitante,
+                            contato=contato,
+                            data_prevista=data_prevista,
+                            interno=True,
+                            observacoes="Criado via Saída em Lote"
+                        )
+                        # A lógica do save() do Emprestimo já baixa o estoque
+                        
+                    else:
+                        # Cria MOVIMENTAÇÃO (Saída Comum)
+                        Movimentacao.objects.create(
+                            item=item,
+                            tipo='SAIDA',
+                            quantidade=quantidade,
+                            usuario=request.user,
+                            observacao="Saída em Lote"
+                        )
+            
+            return redirect('estoque_list')
+        
+        return render(request, self.template_name, {
+            'formset': formset, 
+            'options_form': options_form,
+            'titulo': 'Saída em Lote / Empréstimo Interno'
+        })

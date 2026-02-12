@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ titulo }} | NBR{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card shadow-sm">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0"><i class="bi bi-arrow-up-circle"></i> {{ titulo }}</h4>
+            </div>
+            <div class="card-body">
+                <form method="post" id="form-lote">
+                    {% csrf_token %}
+                    {{ formset.management_form }}
+
+                    <!-- Opções de Empréstimo -->
+                    <div class="card mb-4 border-warning">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="mb-0"><i class="bi bi-person-badge"></i> Opções de Saída</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-check form-switch mb-3">
+                                {{ options_form.is_emprestimo }}
+                                <label class="form-check-label" for="id_is_emprestimo"><strong>É um Empréstimo
+                                        Interno?</strong></label>
+                            </div>
+
+                            <div id="loan-fields" style="display: none;">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        {{ options_form.nome_solicitante|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-4">
+                                        {{ options_form.contato|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-4">
+                                        {{ options_form.data_prevista|as_crispy_field }}
+                                    </div>
+                                </div>
+                                <div class="alert alert-info mt-2">
+                                    <i class="bi bi-info-circle"></i> Ao salvar, será criado um registro de
+                                    <strong>Empréstimo Interno</strong> para cada item abaixo.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="formset-container">
+                        {% for form in formset %}
+                        <div class="row form-row align-items-end mb-3 p-3 border rounded bg-light">
+                            <div class="col-md-7">
+                                {{ form.item|as_crispy_field }}
+                            </div>
+                            <div class="col-md-3">
+                                {{ form.quantidade|as_crispy_field }}
+                            </div>
+                            <div class="col-md-2 mb-3">
+                                <button type="button" class="btn btn-outline-danger w-100 remove-form-row">
+                                    <i class="bi bi-trash"></i> Remover
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-4">
+                        <button type="button" class="btn btn-secondary" id="add-form-row">
+                            <i class="bi bi-plus-lg"></i> Adicionar Item
+                        </button>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-danger btn-lg">
+                            <i class="bi bi-check-lg"></i> Confirmar Saída
+                        </button>
+                        <a href="{% url 'estoque_list' %}" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Template vazio para clonar via JS -->
+<div id="empty-form" style="display: none;">
+    <div class="row form-row align-items-end mb-3 p-3 border rounded bg-light">
+        <div class="col-md-7">
+            {{ formset.empty_form.item|as_crispy_field }}
+        </div>
+        <div class="col-md-3">
+            {{ formset.empty_form.quantidade|as_crispy_field }}
+        </div>
+        <div class="col-md-2 mb-3">
+            <button type="button" class="btn btn-outline-danger w-100 remove-form-row">
+                <i class="bi bi-trash"></i> Remover
+            </button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+</script>
+<script>
+    function toggleLoanFields() {
+        const checkbox = document.getElementById('id_is_emprestimo');
+        const loanFields = document.getElementById('loan-fields');
+        if (checkbox.checked) {
+            loanFields.style.display = 'block';
+        } else {
+            loanFields.style.display = 'none';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Inicializa estado dos campos de empréstimo
+        toggleLoanFields();
+
+        // Listener para o checkbox (caso o onchange do widget não pegue por algum motivo, ou para garantir)
+        const checkbox = document.getElementById('id_is_emprestimo');
+        if (checkbox) {
+            checkbox.addEventListener('change', toggleLoanFields);
+        }
+
+        const container = document.getElementById('formset-container');
+        const addButton = document.getElementById('add-form-row');
+        const totalForms = document.getElementById('id_form-TOTAL_FORMS');
+        const emptyFormHtml = document.getElementById('empty-form').innerHTML;
+
+        // Adicionar nova linha
+        addButton.addEventListener('click', function () {
+            const formIdx = parseInt(totalForms.value);
+            const newFormHtml = emptyFormHtml.replace(/__prefix__/g, formIdx);
+
+            // Cria um elemento temporário para inserir o HTML
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = newFormHtml;
+            const newRow = tempDiv.firstElementChild;
+
+            container.appendChild(newRow);
+
+            // Atualiza TOTAL_FORMS
+            totalForms.value = formIdx + 1;
+
+            // Re-inicializa o Select2 na nova linha
+            $(newRow).find('.select2').select2({
+                theme: 'bootstrap-5',
+                width: '100%'
+            });
+        });
+
+        // Remover linha (delegação de evento)
+        container.addEventListener('click', function (e) {
+            if (e.target.closest('.remove-form-row')) {
+                const row = e.target.closest('.form-row');
+                // Não remove se for a única linha (opcional)
+                if (container.querySelectorAll('.form-row').length > 1) {
+                    row.remove();
+                    // NOTA: Em formsets simples, não precisamos necessariamente re-indexar 
+                    // se estivermos apenas criando novos registros (extra forms).
+                    // O Django lida bem com índices pulados para 'extra' forms.
+                } else {
+                    alert("É necessário pelo menos um item.");
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

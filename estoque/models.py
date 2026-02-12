@@ -81,6 +81,7 @@ class Emprestimo(models.Model):
     observacoes = models.TextField(blank=True, null=True, verbose_name="Observações Gerais")
     
     devolvido = models.BooleanField(default=False, editable=False)
+    interno = models.BooleanField(default=False, verbose_name="Uso Interno")
 
     def __str__(self):
         return f"{self.quantidade_emprestada}x {self.item.nome} - {self.nome_solicitante}"

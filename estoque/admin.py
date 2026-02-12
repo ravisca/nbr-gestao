@@ -43,8 +43,8 @@ class MovimentacaoAdmin(admin.ModelAdmin):
 
 @admin.register(Emprestimo)
 class EmprestimoAdmin(admin.ModelAdmin):
-    list_display = ('item', 'quantidade_emprestada', 'nome_solicitante', 'data_prevista', 'status_devolucao')
-    list_filter = ('devolvido', 'data_saida')
+    list_display = ('item', 'quantidade_emprestada', 'nome_solicitante', 'data_prevista', 'status_devolucao', 'interno')
+    list_filter = ('devolvido', 'data_saida', 'interno')
     search_fields = ('nome_solicitante', 'cpf_solicitante', 'item__nome')
     autocomplete_fields = ['item'] 
 
@@ -68,7 +68,7 @@ class EmprestimoAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('Dados do Solicitante', {
-            'fields': ('nome_solicitante', 'cpf_solicitante', 'contato', 'endereco')
+            'fields': ('nome_solicitante', 'cpf_solicitante', 'contato', 'endereco', 'interno')
         }),
         ('O Que Foi Levado?', {
             'fields': ('item', 'quantidade_emprestada', 'data_saida', 'data_prevista')
