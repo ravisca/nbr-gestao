@@ -18,18 +18,66 @@
         integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC"
         crossorigin="anonymous"></script>
 
-    <title>{% block title %}NBR Gestão{% endblock %}</title>
+    <title>{% block title %}SIGEP{% endblock %}</title>
 
     <style>
+        /* ── Bootstrap Primary Override: Azul → Vermelho ── */
         :root {
             --sidebar-width: 280px;
+            --bs-primary: #DC2626;
+            --bs-primary-rgb: 220, 38, 38;
+            --bs-link-color: #DC2626;
+            --bs-link-hover-color: #b91c1c;
         }
 
+        /* Override Bootstrap component colors globally */
+        .btn-primary {
+            --bs-btn-bg: #DC2626;
+            --bs-btn-border-color: #DC2626;
+            --bs-btn-hover-bg: #b91c1c;
+            --bs-btn-hover-border-color: #991b1b;
+            --bs-btn-active-bg: #991b1b;
+            --bs-btn-active-border-color: #7f1d1d;
+            --bs-btn-disabled-bg: #DC2626;
+            --bs-btn-disabled-border-color: #DC2626;
+        }
+
+        .btn-outline-primary {
+            --bs-btn-color: #DC2626;
+            --bs-btn-border-color: #DC2626;
+            --bs-btn-hover-bg: #DC2626;
+            --bs-btn-hover-border-color: #DC2626;
+            --bs-btn-active-bg: #b91c1c;
+            --bs-btn-active-border-color: #b91c1c;
+        }
+
+        .text-primary {
+            color: #DC2626 !important;
+        }
+
+        .bg-primary {
+            background-color: #DC2626 !important;
+        }
+
+        .border-primary {
+            border-color: #DC2626 !important;
+        }
+
+        a {
+            color: #DC2626;
+        }
+
+        a:hover {
+            color: #b91c1c;
+        }
+
+        /* ── Body ── */
         body {
             min-height: 100vh;
-            background-color: #f8f9fa;
+            background-color: #f0f0f0;
         }
 
+        /* ── Sidebar Dark Theme ── */
         .sidebar {
             width: var(--sidebar-width);
             height: 100vh;
@@ -38,8 +86,8 @@
             top: 0;
             z-index: 1000;
             padding: 1rem;
-            background-color: #fff;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+            background-color: #1a1a2e;
+            box-shadow: 2px 0 20px rgba(0, 0, 0, 0.3);
             display: flex;
             flex-direction: column;
         }
@@ -49,8 +97,9 @@
             padding: 2rem;
         }
 
-        .nav-link {
-            color: #6c757d;
+        /* ── Sidebar Navigation Links ── */
+        .sidebar .nav-link {
+            color: #a0a0b8;
             padding: 0.8rem 1rem;
             border-radius: 0.5rem;
             margin-bottom: 0.2rem;
@@ -61,36 +110,62 @@
             transition: all 0.2s;
         }
 
-        .nav-link:hover,
-        .nav-link.active {
-            background-color: #e9ecef;
-            color: #0d6efd;
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background-color: rgba(220, 38, 38, 0.15);
+            color: #ffffff;
             font-weight: 500;
         }
 
-        .nav-link i {
+        .sidebar .nav-link.active {
+            border-left: 3px solid #DC2626;
+        }
+
+        .sidebar .nav-link i {
             font-size: 1.2rem;
         }
 
+        /* ── Sidebar section headings ── */
+        .sidebar .sidebar-heading,
+        .sidebar .text-muted,
+        .sidebar .h6 {
+            color: #6c6c8a !important;
+        }
+
+        /* ── Logo Area ── */
         .logo-area {
             padding: 1rem 0;
             margin-bottom: 2rem;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid #2a2a40;
             text-align: center;
         }
 
         .logo-area h4 {
             margin: 0;
-            color: #0d6efd;
+            color: #ffffff;
             font-weight: bold;
         }
 
+        .logo-area small {
+            color: #6c6c8a !important;
+        }
+
+        /* ── User Menu ── */
         .user-menu {
             margin-top: auto;
-            border-top: 1px solid #eee;
+            border-top: 1px solid #2a2a40;
             padding-top: 1rem;
         }
 
+        .user-menu .fw-bold {
+            color: #e0e0e0 !important;
+        }
+
+        .user-menu .text-muted {
+            color: #6c6c8a !important;
+        }
+
+        /* ── Responsive ── */
         @media (max-width: 768px) {
             .sidebar {
                 transform: translateX(-100%);
@@ -117,9 +192,10 @@
 <body>
 
     <!-- Mobile Toggle -->
-    <div class="d-md-none p-3 bg-white shadow-sm d-flex justify-content-between align-items-center mb-3">
-        <span class="fw-bold text-primary">NBR Gestão</span>
-        <button class="btn btn-outline-primary" onclick="toggleSidebar()">
+    <div class="d-md-none p-3 shadow-sm d-flex justify-content-between align-items-center mb-3"
+        style="background-color: #1a1a2e;">
+        <span class="fw-bold" style="color: #ffffff;">SIGEP</span>
+        <button class="btn btn-outline-light" onclick="toggleSidebar()">
             <i class="bi bi-list"></i>
         </button>
     </div>
@@ -127,8 +203,8 @@
     <!-- Sidebar -->
     <nav class="sidebar" id="sidebar">
         <div class="logo-area">
-            <img src="{% static 'img/logo.png' %}" alt="Logo NBR" style="max-height: 50px; margin-bottom: 10px;">
-            <h4>NBR Gestão</h4>
+            <img src="{% static 'img/logo.png' %}" alt="Logo SIGEP" style="max-height: 50px; margin-bottom: 10px;">
+            <h4>SIGEP</h4>
             <small class="text-muted">Painel Administrativo</small>
         </div>
 
