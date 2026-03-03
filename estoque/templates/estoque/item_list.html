@@ -7,17 +7,17 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2>Controle de Estoque</h2>
     <div>
-        <a href="{% url 'estoque_entrada' %}" class="btn btn-success me-2">
+        <a href="{% url 'estoque_entrada' %}" class="btn btn-success me-1">
             <i class="bi bi-arrow-down-circle"></i> Entrada
         </a>
-        <a href="{% url 'estoque_saida' %}" class="btn btn-danger me-2">
+        <a href="{% url 'estoque_saida' %}" class="btn btn-danger me-1">
             <i class="bi bi-arrow-up-circle"></i> Saída
         </a>
-        <a href="{% url 'estoque_saida_lote' %}" class="btn btn-outline-danger me-2">
-            <i class="bi bi-collection"></i> Saída em Lote
+        <a href="{% url 'estoque_emprestimo_list' %}" class="btn btn-outline-warning me-1">
+            <i class="bi bi-arrow-left-right"></i> Empréstimos
         </a>
-        <a href="{% url 'estoque_relatorio_movimentacao' %}" class="btn btn-outline-dark me-2" target="_blank">
-            <i class="bi bi-file-earmark-pdf"></i> Relatório Mensal
+        <a href="{% url 'estoque_relatorio_movimentacao' %}" class="btn btn-outline-dark me-1" target="_blank">
+            <i class="bi bi-file-earmark-pdf"></i> Relatório
         </a>
         <a href="{% url 'estoque_item_create' %}" class="btn btn-primary">
             <i class="bi bi-plus-lg"></i> Novo Item
@@ -40,46 +40,54 @@
     </div>
 </div>
 
-<div class="row">
-    {% for item in itens %}
-    <div class="col-md-4 mb-4">
-        <div class="card h-100 shadow-sm border-0">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <h5 class="card-title fw-bold text-primary">{{ item.nome }}</h5>
-                        <small class="text-muted">{{ item.categoria }}</small>
-                    </div>
-                    <a href="{% url 'estoque_item_update' item.pk %}" class="btn btn-sm btn-light">
-                        <i class="bi bi-pencil"></i>
-                    </a>
-                </div>
-
-                <div class="my-3 text-center">
-                    <h2
-                        class="display-6 fw-bold {% if item.quantidade_atual <= item.estoque_minimo %}text-danger{% else %}text-success{% endif %}">
-                        {{ item.quantidade_atual }}
-                    </h2>
-                    <span class="badge bg-secondary">{{ item.unidade }}</span>
-                </div>
-
-                <div class="progress" style="height: 5px;">
-                    <div class="progress-bar {% if item.quantidade_atual <= item.estoque_minimo %}bg-danger{% else %}bg-success{% endif %}"
-                        role="progressbar" style="width: 100%"></div>
-                </div>
-
-                {% if item.quantidade_atual <= item.estoque_minimo %} <div
-                    class="alert alert-warning py-1 mt-3 mb-0 small">
-                    <i class="bi bi-exclamation-triangle"></i> Estoque Baixo (Mín: {{ item.estoque_minimo }})
-            </div>
-            {% endif %}
-        </div>
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Item</th>
+                    <th>Categoria</th>
+                    <th>Unidade</th>
+                    <th class="text-center">Saldo</th>
+                    <th class="text-center">Mínimo</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-end">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in itens %}
+                <tr>
+                    <td class="fw-bold">{{ item.nome }}</td>
+                    <td><small class="text-muted">{{ item.categoria }}</small></td>
+                    <td><span class="badge bg-secondary">{{ item.unidade.sigla }}</span></td>
+                    <td class="text-center">
+                        <span
+                            class="fw-bold fs-5 {% if item.quantidade_atual <= item.estoque_minimo %}text-danger{% else %}text-success{% endif %}">
+                            {{ item.quantidade_atual }}
+                        </span>
+                    </td>
+                    <td class="text-center text-muted">{{ item.estoque_minimo }}</td>
+                    <td class="text-center">
+                        {% if item.quantidade_atual <= item.estoque_minimo %} <span class="badge bg-danger"><i
+                                class="bi bi-exclamation-triangle"></i> Baixo</span>
+                            {% else %}
+                            <span class="badge bg-success">OK</span>
+                            {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <a href="{% url 'estoque_item_update' item.pk %}" class="btn btn-sm btn-outline-primary"
+                            title="Editar">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-muted">Nenhum item cadastrado no estoque.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-</div>
-{% empty %}
-<div class="col-12 text-center text-muted py-5">
-    Nenhum item cadastrado no estoque.
-</div>
-{% endfor %}
 </div>
 {% endblock %}

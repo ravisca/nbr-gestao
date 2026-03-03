@@ -55,72 +55,82 @@ class Movimentacao(models.Model):
             else: self.item.quantidade_atual -= self.quantidade
             self.item.save()
 
-# --- MODELO ATUALIZADO (SEM VÍNCULO COM BENEFICIÁRIO) ---
+
 class Emprestimo(models.Model):
+    TIPO_CHOICES = [
+        ('EXTERNO', 'Externo'),
+        ('INTERNO', 'Interno / Operação'),
+    ]
+
     item = models.ForeignKey(Item, on_delete=models.PROTECT, verbose_name="Item Emprestado")
-    
-    # Dados do Solicitante
+    tipo = models.CharField(max_length=10, choices=TIPO_CHOICES, default='EXTERNO', verbose_name="Tipo")
+
+    # Dados do Solicitante (Externo)
     nome_solicitante = models.CharField(max_length=200, verbose_name="Nome Completo")
     cpf_solicitante = models.CharField(max_length=14, verbose_name="CPF/Documento", blank=True, null=True)
     contato = models.CharField(max_length=100, verbose_name="Telefone/WhatsApp")
+    email_solicitante = models.EmailField(blank=True, null=True, verbose_name="E-mail")
     endereco = models.CharField(max_length=255, verbose_name="Endereço", blank=True, null=True)
+    responsavel_casa = models.CharField(max_length=200, blank=True, null=True, verbose_name="Responsável da Casa (quem entregou)")
 
-    # Controle de Quantidade (NOVO)
+    # Dados Internos (Projeto/Operação)
+    projeto = models.ForeignKey('atividades.Projeto', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Projeto")
+    nucleo = models.ForeignKey('atividades.Nucleo', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Núcleo")
+    logistica = models.TextField(blank=True, null=True, verbose_name="Detalhes de Logística")
+
+    # Controle de Quantidade
     quantidade_emprestada = models.PositiveIntegerField(default=1, verbose_name="Qtd. Levada")
-    
+
     # Datas
-    data_saida = models.DateField(default=timezone.now, verbose_name="Data de Retirada")
+    data_saida = models.DateField(default=timezone.now, verbose_name="Data de Saída (Prevista)")
+    data_saida_real = models.DateField(blank=True, null=True, verbose_name="Data de Saída (Real)")
     data_prevista = models.DateField(verbose_name="Previsão de Devolução")
-    
+
     # Devolução
     data_devolucao = models.DateField(blank=True, null=True, verbose_name="Data da Devolução Real")
     quantidade_devolvida = models.PositiveIntegerField(blank=True, null=True, verbose_name="Qtd. Devolvida")
-    
-    # Motivo aparece se Qtd Devolvida < Qtd Emprestada
     motivo_falta = models.TextField(blank=True, null=True, verbose_name="Motivo da Diferença (Perda/Quebra)")
     observacoes = models.TextField(blank=True, null=True, verbose_name="Observações Gerais")
-    
+
     devolvido = models.BooleanField(default=False, editable=False)
-    interno = models.BooleanField(default=False, verbose_name="Uso Interno")
 
     def __str__(self):
         return f"{self.quantidade_emprestada}x {self.item.nome} - {self.nome_solicitante}"
 
     class Meta:
-        verbose_name = "Empréstimo Avulso"
+        verbose_name = "Empréstimo"
         verbose_name_plural = "Controle de Empréstimos"
+        ordering = ['-data_saida', '-id']
+
+    @property
+    def status_display(self):
+        if self.devolvido:
+            return 'Devolvido'
+        if self.data_prevista and self.data_prevista < timezone.now().date():
+            return 'Atrasado'
+        return 'Pendente'
 
     def clean(self):
-        # 1. Validação na Saída (Criação)
         if not self.pk and not self.devolvido:
             if self.item.quantidade_atual < self.quantidade_emprestada:
                 raise ValidationError(f"Estoque insuficiente! Você quer {self.quantidade_emprestada}, mas só tem {self.item.quantidade_atual}.")
 
-        # 2. Validação na Devolução
         if self.quantidade_devolvida is not None:
-            # Não pode devolver mais do que levou
             if self.quantidade_devolvida > self.quantidade_emprestada:
-                 raise ValidationError({'quantidade_devolvida': "Você não pode devolver mais do que emprestou!"})
-            
-            # Se devolver MENOS, o motivo é obrigatório
+                raise ValidationError({'quantidade_devolvida': "Você não pode devolver mais do que emprestou!"})
             if self.quantidade_devolvida < self.quantidade_emprestada and not self.motivo_falta:
                 raise ValidationError({'motivo_falta': "Como a quantidade devolvida é menor que a emprestada, descreva o motivo da falta."})
 
     def save(self, *args, **kwargs):
         is_new = self.pk is None
-        
+
         if is_new:
-            # SAÍDA: Subtrai a quantidade que está levando
             self.item.quantidade_atual -= self.quantidade_emprestada
             self.item.save()
-        
         else:
-            # RETORNO: Se preencheu a data E a quantidade devolvida, e ainda não processou
             if self.data_devolucao and self.quantidade_devolvida is not None and not self.devolvido:
-                # O Estoque recebe de volta APENAS o que foi devolvido fisicamente
-                # O restante é considerado perda/consumo
                 self.item.quantidade_atual += self.quantidade_devolvida
                 self.item.save()
                 self.devolvido = True
-                
+
         super().save(*args, **kwargs)

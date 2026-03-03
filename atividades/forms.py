@@ -1,6 +1,6 @@
 from django import forms
 from django.forms import inlineformset_factory
-from .models import Projeto, TipoAtividade, RegistroAtividade
+from .models import Projeto, TipoAtividade, RegistroAtividade, Nucleo
 from financeiro.models import NaturezaDespesa, ItemDespesa
 
 class ProjetoForm(forms.ModelForm):
@@ -11,6 +11,15 @@ class ProjetoForm(forms.ModelForm):
             'descricao': forms.Textarea(attrs={'rows': 3}),
             'cor': forms.TextInput(attrs={'type': 'color', 'class': 'form-control form-control-color', 'title': 'Escolha a cor do projeto'}),
         }
+
+# --- NÚCLEOS ---
+NucleoFormSet = inlineformset_factory(
+    Projeto,
+    Nucleo,
+    fields=['nome'],
+    extra=1,
+    can_delete=True
+)
 
 # --- ATIVIDADES (Check-in, Monitor) ---
 class TipoAtividadeForm(forms.ModelForm):
@@ -92,8 +101,9 @@ NaturezaDespesaFormSet = inlineformset_factory(
 class RegistroAtividadeForm(forms.ModelForm):
     class Meta:
         model = RegistroAtividade
-        fields = ['projeto', 'tipo_atividade', 'data', 'descricao', 'foto_1', 'foto_2', 'video_1']
+        fields = ['projeto', 'tipo_atividade', 'data', 'descricao', 'foto_1', 'foto_2', 'foto_3', 'foto_4', 'observacoes']
         widgets = {
             'data': forms.DateInput(attrs={'type': 'date'}),
             'descricao': forms.Textarea(attrs={'rows': 3}),
+            'observacoes': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Observações adicionais...'}),
         }

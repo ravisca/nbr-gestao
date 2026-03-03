@@ -7,4 +7,5 @@ urlpatterns = [
     path('editar/<int:pk>/', views.BeneficiarioUpdateView.as_view(), name='beneficiarios_update'),
     path('detalhes/<int:pk>/', views.BeneficiarioDetailView.as_view(), name='beneficiarios_detail'),
     path('relatorios/lista-chamada/', views.ListaChamadaPdfView.as_view(), name='beneficiarios_relatorio_chamada'),
+    path('relatorios/por-projeto/', views.RelatorioPorProjetoView.as_view(), name='beneficiarios_relatorio_projeto'),
 ]

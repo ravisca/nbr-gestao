@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.core.validators import FileExtensionValidator
+
 
 class Projeto(models.Model):
     nome = models.CharField(max_length=100, verbose_name="Nome do Projeto")
@@ -11,14 +11,27 @@ class Projeto(models.Model):
     def __str__(self):
         return self.nome
 
-# NOVO MODELO: Define o que pode ser feito nesse projeto
+# Núcleo: agrupador intermediário dentro de um projeto
+class Nucleo(models.Model):
+    projeto = models.ForeignKey(Projeto, on_delete=models.CASCADE, related_name="nucleos")
+    nome = models.CharField(max_length=100, verbose_name="Nome do Núcleo (Ex: Núcleo Centro)")
+
+    def __str__(self):
+        return f"{self.projeto.nome} | {self.nome}"
+
+    class Meta:
+        verbose_name = "Núcleo"
+        verbose_name_plural = "Núcleos"
+        ordering = ['nome']
+
+# Define o que pode ser feito nesse projeto
 class TipoAtividade(models.Model):
     projeto = models.ForeignKey(Projeto, on_delete=models.CASCADE, related_name="tipos_atividade")
+    nucleo = models.ForeignKey(Nucleo, on_delete=models.SET_NULL, null=True, blank=True, related_name="atividades", verbose_name="Núcleo")
     nome = models.CharField(max_length=100, verbose_name="Nome da Atividade (Ex: Treino, Aula)")
     turnos = models.ManyToManyField('beneficiarios.Turno', verbose_name="Turnos Disponíveis", blank=True)
     
     def __str__(self):
-        # Truque para o JavaScript filtrar depois: "Nome do Projeto | Nome da Atividade"
         return f"{self.projeto.nome} | {self.nome}"
 
 class RegistroAtividade(models.Model):
@@ -32,15 +45,14 @@ class RegistroAtividade(models.Model):
     data = models.DateField(verbose_name="Data da Atividade")
     descricao = models.TextField(verbose_name="Descrição Detalhada do Dia")
 
-    # --- MÍDIA (Mantendo sua regra de min/max) ---
-    foto_1 = models.ImageField(upload_to='atividades/fotos/%Y/%m/', verbose_name="Foto 1 (Obrigatória)")
-    foto_2 = models.ImageField(upload_to='atividades/fotos/%Y/%m/', blank=True, null=True, verbose_name="Foto 2")
-    foto_3 = models.ImageField(upload_to='atividades/fotos/%Y/%m/', blank=True, null=True, verbose_name="Foto 3")
-    foto_4 = models.ImageField(upload_to='atividades/fotos/%Y/%m/', blank=True, null=True, verbose_name="Foto 4")
+    # --- MÍDIA (4 fotos obrigatórias) ---
+    foto_1 = models.ImageField(upload_to='atividades/fotos/%Y/%m/', verbose_name="Foto 1")
+    foto_2 = models.ImageField(upload_to='atividades/fotos/%Y/%m/', verbose_name="Foto 2")
+    foto_3 = models.ImageField(upload_to='atividades/fotos/%Y/%m/', verbose_name="Foto 3")
+    foto_4 = models.ImageField(upload_to='atividades/fotos/%Y/%m/', verbose_name="Foto 4")
 
-    video_validator = FileExtensionValidator(['mp4', 'avi', 'mov'])
-    video_1 = models.FileField(upload_to='atividades/videos/%Y/%m/', verbose_name="Vídeo 1 (Obrigatório)", validators=[video_validator])
-    video_2 = models.FileField(upload_to='atividades/videos/%Y/%m/', blank=True, null=True, verbose_name="Vídeo 2", validators=[video_validator])
+    # --- OBSERVAÇÕES ---
+    observacoes = models.TextField(verbose_name="Observações", blank=True)
 
     data_registro = models.DateTimeField(auto_now_add=True)
 

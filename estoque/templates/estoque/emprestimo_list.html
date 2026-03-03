@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block title %}Empréstimos | SIGEP{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Controle de Empréstimos</h2>
+    <div>
+        <a href="{% url 'estoque_emprestimo_externo' %}" class="btn btn-warning me-1">
+            <i class="bi bi-person-plus"></i> Empréstimo Externo
+        </a>
+        <a href="{% url 'estoque_emprestimo_interno' %}" class="btn btn-info me-1">
+            <i class="bi bi-building"></i> Empréstimo Interno
+        </a>
+        <a href="{% url 'estoque_relatorio_emprestimos' %}" class="btn btn-outline-dark me-1">
+            <i class="bi bi-file-earmark-bar-graph"></i> Relatório
+        </a>
+        <a href="{% url 'estoque_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Voltar
+        </a>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Status</label>
+                <select name="status" class="form-select">
+                    <option value="">Todos</option>
+                    <option value="pendente" {% if request.GET.status == "pendente" %}selected{% endif %}>Pendentes
+                    </option>
+                    <option value="devolvido" {% if request.GET.status == "devolvido" %}selected{% endif %}>Devolvidos
+                    </option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Tipo</label>
+                <select name="tipo" class="form-select">
+                    <option value="">Todos</option>
+                    <option value="EXTERNO" {% if request.GET.tipo == "EXTERNO" %}selected{% endif %}>Externo</option>
+                    <option value="INTERNO" {% if request.GET.tipo == "INTERNO" %}selected{% endif %}>Interno</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel"></i> Filtrar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tabela de Empréstimos -->
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Item</th>
+                    <th class="text-center">Qtd Emprestada</th>
+                    <th class="text-center">Qtd Devolvida</th>
+                    <th>Solicitante</th>
+                    <th>Tipo</th>
+                    <th>Data Saída</th>
+                    <th>Previsão</th>
+                    <th>Status</th>
+                    <th class="text-end">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in emprestimos %}
+                <tr
+                    class="{% if e.devolvido %}table-success{% elif e.status_display == 'Atrasado' %}table-danger{% endif %}">
+                    <td class="fw-bold">{{ e.item.nome }}</td>
+                    <td class="text-center">{{ e.quantidade_emprestada }}</td>
+                    <td class="text-center">
+                        {% if e.quantidade_devolvida is not None %}
+                        {{ e.quantidade_devolvida }}
+                        {% if e.quantidade_devolvida < e.quantidade_emprestada %} <br><small class="text-danger"
+                                title="{{ e.motivo_falta }}"><i class="bi bi-exclamation-circle"></i> Falta</small>
+                            {% endif %}
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                    </td>
+                    <td>
+                        <div>{{ e.nome_solicitante }}</div>
+                        <small class="text-muted">{{ e.contato }}</small>
+                    </td>
+                    <td>
+                        {% if e.tipo == 'EXTERNO' %}
+                        <span class="badge bg-warning text-dark">Externo</span>
+                        {% else %}
+                        <span class="badge bg-info">Interno</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ e.data_saida|date:"d/m/Y" }}</td>
+                    <td>{{ e.data_prevista|date:"d/m/Y" }}</td>
+                    <td>
+                        {% if e.devolvido %}
+                        <span class="badge bg-success">Devolvido</span>
+                        {% elif e.status_display == 'Atrasado' %}
+                        <span class="badge bg-danger">Atrasado</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Pendente</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        {% if not e.devolvido %}
+                        <a href="{% url 'estoque_emprestimo_devolucao' e.pk %}" class="btn btn-sm btn-outline-success"
+                            title="Registrar Devolução">
+                            <i class="bi bi-box-arrow-in-down"></i>
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" class="text-center py-4 text-muted">Nenhum empréstimo registrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

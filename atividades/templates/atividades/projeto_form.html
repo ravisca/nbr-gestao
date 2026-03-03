@@ -32,6 +32,33 @@
 
                     <hr class="my-4">
 
+                    <h5 class="mb-3 text-secondary">Núcleos do Projeto</h5>
+                    <div class="alert alert-light border">
+                        <small class="text-muted"><i class="bi bi-info-circle"></i> Adicione os núcleos do projeto (ex:
+                            Núcleo Centro, Núcleo Vila).</small>
+                    </div>
+
+                    {{ nucleos.management_form }}
+                    <div id="nucleos-list">
+                        {% for form_nucleo in nucleos %}
+                        <div class="row align-items-center mb-2 nucleo-item">
+                            <div class="col-md-10">
+                                {{ form_nucleo.id }}
+                                {{ form_nucleo.nome|as_crispy_field }}
+                            </div>
+                            <div class="col-md-2 text-center pt-4">
+                                {% if nucleos.can_delete %}
+                                <div class="d-none">{{ form_nucleo.DELETE }}</div>
+                                <button type="button" class="btn btn-danger btn-sm remove-nucleo"><i
+                                        class="bi bi-x-lg"></i></button>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <button type="button" id="add-nucleo" class="btn btn-outline-secondary btn-sm mt-2"><i
+                            class="bi bi-plus-circle"></i> Adicionar Núcleo</button>
+
                     <hr class="my-4">
 
                     <h5 class="mb-3 text-secondary">Atividades do Projeto</h5>
@@ -105,6 +132,19 @@
                             class="bi bi-plus-circle"></i> Adicionar Natureza</button>
 
                     <!-- Templates Ocultos -->
+                    <div id="empty-form-nucleo" style="display:none;">
+                        <div class="row align-items-center mb-2 nucleo-item">
+                            <div class="col-md-10">
+                                {{ nucleos.empty_form.id }}
+                                {{ nucleos.empty_form.nome|as_crispy_field }}
+                            </div>
+                            <div class="col-md-2 text-center pt-4">
+                                <button type="button" class="btn btn-danger btn-sm remove-nucleo"><i
+                                        class="bi bi-x-lg"></i></button>
+                            </div>
+                        </div>
+                    </div>
+
                     <div id="empty-form" style="display:none;">
                         <div class="row align-items-center mb-2 atividade-item">
                             <div class="col-md-5">
@@ -146,6 +186,33 @@
 
                     <script>
                         document.addEventListener('DOMContentLoaded', function () {
+                            // --- Lógica Núcleos ---
+                            const addNucBtn = document.getElementById('add-nucleo');
+                            const listNuc = document.getElementById('nucleos-list');
+                            const emptyFormNuc = document.getElementById('empty-form-nucleo').firstElementChild;
+                            const totalFormsNuc = document.getElementById('id_nucleos-TOTAL_FORMS');
+
+                            addNucBtn.addEventListener('click', function () {
+                                const newForm = emptyFormNuc.cloneNode(true);
+                                const currentForms = parseInt(totalFormsNuc.value);
+                                newForm.innerHTML = newForm.innerHTML.replace(/__prefix__/g, currentForms);
+                                listNuc.appendChild(newForm);
+                                totalFormsNuc.value = currentForms + 1;
+                            });
+
+                            document.addEventListener('click', function (e) {
+                                if (e.target && (e.target.classList.contains('remove-nucleo') || e.target.closest('.remove-nucleo'))) {
+                                    const row = e.target.closest('.row');
+                                    const deleteInput = row.querySelector('input[name$="-DELETE"]');
+                                    if (deleteInput) {
+                                        deleteInput.checked = true;
+                                        row.style.display = 'none';
+                                    } else {
+                                        row.remove();
+                                    }
+                                }
+                            });
+
                             // --- Lógica Atividades ---
                             const addBtn = document.getElementById('add-atividade');
                             const list = document.getElementById('atividades-list');
@@ -162,13 +229,13 @@
 
                             document.addEventListener('click', function (e) {
                                 if (e.target && (e.target.classList.contains('remove-row') || e.target.closest('.remove-row'))) {
-                                    const row = e.target.closest('.row'); // Pega a linha
+                                    const row = e.target.closest('.row');
                                     const deleteInput = row.querySelector('input[name$="-DELETE"]');
                                     if (deleteInput) {
                                         deleteInput.checked = true;
                                         row.style.display = 'none';
                                     } else {
-                                        row.remove(); // Se é novo e não salvou, remove do DOM
+                                        row.remove();
                                     }
                                 }
                             });
@@ -189,7 +256,7 @@
 
                             document.addEventListener('click', function (e) {
                                 if (e.target && (e.target.classList.contains('remove-row-natureza') || e.target.closest('.remove-row-natureza'))) {
-                                    const row = e.target.closest('.card'); // Natureza é um card
+                                    const row = e.target.closest('.card');
                                     const deleteInput = row.querySelector('input[name$="-DELETE"]');
                                     if (deleteInput) {
                                         deleteInput.checked = true;

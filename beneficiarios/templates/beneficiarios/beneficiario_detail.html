@@ -52,23 +52,23 @@
     <div class="col-md-8">
         <div class="card shadow-sm mb-4">
             <div class="card-header bg-white">
-                <h5 class="mb-0">Dados do Programa</h5>
+                <h5 class="mb-0">Vínculos</h5>
             </div>
             <div class="card-body">
-                <div class="row">
-                    <div class="col-md-4">
-                        <small class="text-muted d-block">Projeto</small>
-                        <h6>{{ beneficiario.projeto }}</h6>
-                    </div>
-                    <div class="col-md-4">
-                        <small class="text-muted d-block">Atividade</small>
-                        <h6>{{ beneficiario.atividade }}</h6>
-                    </div>
-                    <div class="col-md-4">
-                        <small class="text-muted d-block">Turno</small>
-                        <h6>{{ beneficiario.turno }}</h6>
-                    </div>
+                {% for vinculo in beneficiario.vinculos.all %}
+                <div class="d-flex align-items-center mb-2">
+                    <span class="badge text-dark border me-2"
+                        style="background-color: {{ vinculo.projeto.cor|default:'#eee' }};">
+                        {{ vinculo.projeto }}
+                    </span>
+                    <span class="text-muted">
+                        {% if vinculo.nucleo %}{{ vinculo.nucleo.nome }} → {% endif %}
+                        {{ vinculo.atividade.nome }} → {{ vinculo.turno }}
+                    </span>
                 </div>
+                {% empty %}
+                <p class="text-muted">Nenhum vínculo cadastrado.</p>
+                {% endfor %}
             </div>
         </div>
 

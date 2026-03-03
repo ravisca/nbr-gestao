@@ -1,56 +1,66 @@
 from django import forms
-from .models import Beneficiario, Turno
-from atividades.models import TipoAtividade, Projeto
+from django.forms import inlineformset_factory
+from .models import Beneficiario, Turno, VinculoBeneficiario
+from atividades.models import TipoAtividade, Projeto, Nucleo
 
 class BeneficiarioForm(forms.ModelForm):
     class Meta:
         model = Beneficiario
-        fields = '__all__'
+        fields = [
+            'nome_completo', 'data_nascimento', 'cpf', 'telefone', 'foto',
+            'tem_problema_saude', 'descricao_saude',
+            'necessita_acessibilidade', 'descricao_acessibilidade',
+            'responsavel', 'grau_parentesco',
+            'observacoes', 'status',
+        ]
         widgets = {
             'data_nascimento': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
         }
 
+
+class VinculoForm(forms.ModelForm):
+    class Meta:
+        model = VinculoBeneficiario
+        fields = ['projeto', 'nucleo', 'atividade', 'turno']
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
-        # HTMX Trigger: Quando mudar o projeto, recarrega o campo 'atividade'
-        if 'projeto' in self.fields:
-            self.fields['projeto'].widget.attrs.update({
-                'hx-get': '/atividades/ajax/load-atividades/',
-                'hx-target': '#id_atividade',
-                'hx-swap': 'innerHTML'
-            })
 
-        # HTMX Trigger: Quando mudar a atividade, recarrega o campo 'turno'
-        if 'atividade' in self.fields:
-            self.fields['atividade'].widget.attrs.update({
-                'hx-get': '/atividades/ajax/load-turnos/',
-                'hx-target': '#id_turno',
-                'hx-swap': 'innerHTML'
-            })
-
-        # Filtragem Inicial (se já tiver projeto selecionado ou se for POST)
+        # Cascata: Projeto → Núcleo
+        self.fields['nucleo'].queryset = Nucleo.objects.none()
+        # Cascata: Núcleo → Atividade
         self.fields['atividade'].queryset = TipoAtividade.objects.none()
+        # Cascata: Atividade → Turno
         self.fields['turno'].queryset = Turno.objects.none()
 
         if 'projeto' in self.data:
+            prefix = self.prefix
             try:
-                projeto_id = int(self.data.get('projeto'))
+                projeto_id = int(self.data.get(f'{prefix}-projeto'))
+                self.fields['nucleo'].queryset = Nucleo.objects.filter(projeto_id=projeto_id).order_by('nome')
                 self.fields['atividade'].queryset = TipoAtividade.objects.filter(projeto_id=projeto_id).order_by('nome')
             except (ValueError, TypeError):
-                pass  # Entrada inválida, mantém queryset vazio
-        elif self.instance.pk:
-            # Edição: carrega atividades do projeto salvo
-            if self.instance.projeto_id:
-                self.fields['atividade'].queryset = self.instance.projeto.tipos_atividade.order_by('nome')
+                pass
+        elif self.instance.pk and self.instance.projeto_id:
+            self.fields['nucleo'].queryset = Nucleo.objects.filter(projeto=self.instance.projeto).order_by('nome')
+            self.fields['atividade'].queryset = TipoAtividade.objects.filter(projeto=self.instance.projeto).order_by('nome')
 
-        # Lógica para carregar TURNOS baseados na atividade
         if 'atividade' in self.data:
+            prefix = self.prefix
             try:
-                atividade_id = int(self.data.get('atividade'))
+                atividade_id = int(self.data.get(f'{prefix}-atividade'))
                 self.fields['turno'].queryset = Turno.objects.filter(tipoatividade__id=atividade_id).order_by('nome')
             except (ValueError, TypeError):
                 pass
-        elif self.instance.pk:
-            if self.instance.atividade_id:
-                self.fields['turno'].queryset = self.instance.atividade.turnos.order_by('nome')
+        elif self.instance.pk and self.instance.atividade_id:
+            self.fields['turno'].queryset = self.instance.atividade.turnos.order_by('nome')
+
+
+VinculoFormSet = inlineformset_factory(
+    Beneficiario,
+    VinculoBeneficiario,
+    form=VinculoForm,
+    fields=['projeto', 'nucleo', 'atividade', 'turno'],
+    extra=1,
+    can_delete=True,
+)

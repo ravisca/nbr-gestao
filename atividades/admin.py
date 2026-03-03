@@ -1,6 +1,13 @@
 from django.contrib import admin
 from django.utils import timezone
-from .models import Projeto, TipoAtividade, RegistroAtividade
+from .models import Projeto, TipoAtividade, RegistroAtividade, Nucleo
+
+@admin.register(Nucleo)
+class NucleoAdmin(admin.ModelAdmin):
+    list_display = ('nome', 'projeto')
+    list_filter = ('projeto',)
+    search_fields = ('nome',)
+
 
 # --- CORREÇÃO: Registramos o TipoAtividade individualmente ---
 @admin.register(TipoAtividade)
@@ -39,13 +46,10 @@ class RegistroAtividadeAdmin(admin.ModelAdmin):
             'fields': ('projeto', 'tipo_atividade', 'data', 'monitor')
         }),
         ('Relato', {
-            'fields': ('descricao',)
+            'fields': ('descricao', 'observacoes')
         }),
         ('Fotos (1 a 4)', {
             'fields': ('foto_1', 'foto_2', 'foto_3', 'foto_4')
-        }),
-        ('Vídeos (1 a 2)', {
-            'fields': ('video_1', 'video_2')
         }),
     )
 

@@ -1,12 +1,15 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView, CreateView, View
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .models import Conta, Receita, Despesa, ItemDespesa
+from django.contrib import messages
+from .models import Conta, Despesa, ItemDespesa
 from .forms import DespesaForm
 from core.utils import render_to_pdf
 from django.utils import timezone
 from django.db.models import Sum
+from atividades.models import Projeto
+
 
 class FinanceiroDashboardView(LoginRequiredMixin, TemplateView):
     template_name = 'financeiro/dashboard.html'
@@ -14,25 +17,10 @@ class FinanceiroDashboardView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['contas'] = Conta.objects.all()
-        context['receitas_recentes'] = Receita.objects.order_by('-data', '-id')[:5]
-        context['despesas_recentes'] = Despesa.objects.order_by('-data_lancamento')[:5]
+        context['despesas_recentes'] = Despesa.objects.filter(inutilizado=False).order_by('-data_lancamento')[:10]
+        context['despesas_inutilizadas'] = Despesa.objects.filter(inutilizado=True).order_by('-data_inutilizacao')[:5]
         return context
 
-class ReceitaCreateView(LoginRequiredMixin, CreateView):
-    model = Receita
-    template_name = 'financeiro/lancamento_form.html'
-    fields = ['conta', 'categoria', 'valor', 'data', 'descricao']
-    success_url = reverse_lazy('financeiro_dashboard')
-
-    def form_valid(self, form):
-        form.instance.responsavel = self.request.user
-        return super().form_valid(form)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['titulo'] = 'Nova Receita (Entrada)'
-        context['cor'] = 'success'
-        return context
 
 class DespesaCreateView(LoginRequiredMixin, CreateView):
     model = Despesa
@@ -50,40 +38,57 @@ class DespesaCreateView(LoginRequiredMixin, CreateView):
         context['cor'] = 'danger'
         return context
 
+
+class DespesaInutilizarView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        despesa = get_object_or_404(Despesa, pk=pk)
+        motivo = request.POST.get('motivo', '')
+        despesa.inutilizar(motivo=motivo)
+        messages.success(request, f'Despesa #{despesa.pk} inutilizada com sucesso. Saldo devolvido à conta.')
+        return redirect('financeiro_dashboard')
+
+
 class RelatorioFinanceiroPdfView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
-        # Default para o mês atual se não informado
         hoje = timezone.now()
         mes = request.GET.get('mes', hoje.strftime('%m'))
         ano = request.GET.get('ano', hoje.year)
-        
-        # Filtros
-        despesas = Despesa.objects.filter(mes_referencia=mes, ano_referencia=ano).order_by('data_emissao')
-        receitas = Receita.objects.filter(data__month=mes, data__year=ano).order_by('data')
-        
-        # Totais
+        projeto_id = request.GET.get('projeto')
+
+        # Base queryset: apenas despesas ativas, ordem cronológica
+        despesas = Despesa.objects.filter(
+            inutilizado=False,
+            mes_referencia=mes,
+            ano_referencia=ano
+        ).order_by('data_emissao')
+
+        # Filtro por projeto
+        if projeto_id:
+            despesas = despesas.filter(projeto_id=projeto_id)
+
+        # Total (linha de soma)
         total_despesas = despesas.aggregate(Sum('valor'))['valor__sum'] or 0
-        total_receitas = receitas.aggregate(Sum('valor'))['valor__sum'] or 0
-        saldo_periodo = total_receitas - total_despesas
-        
+
+        # Projetos para o filtro
+        projetos = Projeto.objects.all().order_by('nome')
+
         context = {
             'despesas': despesas,
-            'receitas': receitas,
             'total_despesas': total_despesas,
-            'total_receitas': total_receitas,
-            'saldo_periodo': saldo_periodo,
             'mes': mes,
             'ano': ano,
             'data_geracao': hoje,
             'usuario': request.user,
+            'projetos': projetos,
+            'projeto_selecionado': int(projeto_id) if projeto_id else None,
         }
-        
+
         return render_to_pdf('financeiro/relatorio_prestacao.html', context)
+
 
 def load_itens_despesa(request):
     projeto_id = request.GET.get('projeto')
     itens = []
     if projeto_id:
-        # Traz itens ordenados por natureza
         itens = ItemDespesa.objects.filter(natureza__projeto_id=projeto_id).order_by('natureza__codigo', 'codigo')
     return render(request, 'financeiro/item_dropdown_list_options.html', {'itens': itens})

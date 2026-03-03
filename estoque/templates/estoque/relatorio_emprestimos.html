@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block title %}Relatório de Empréstimos | SIGEP{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Relatório de Empréstimos</h2>
+    <a href="{% url 'estoque_emprestimo_list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Voltar
+    </a>
+</div>
+
+<!-- Filtro -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-8">
+                <label class="form-label fw-bold">Tipo</label>
+                <select name="tipo" class="form-select">
+                    <option value="">Todos</option>
+                    <option value="EXTERNO" {% if tipo_selecionado=='EXTERNO' %}selected{% endif %}>Externo</option>
+                    <option value="INTERNO" {% if tipo_selecionado=='INTERNO' %}selected{% endif %}>Interno / Operação
+                    </option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel"></i> Filtrar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if emprestimos %}
+<div class="card shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Total: {{ emprestimos|length }} empréstimos</h5>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Item</th>
+                    <th class="text-center">Qtd Emp.</th>
+                    <th class="text-center">Qtd Dev.</th>
+                    <th>Solicitante</th>
+                    <th>Contato</th>
+                    <th>Responsável Casa</th>
+                    <th>Tipo</th>
+                    <th>Projeto</th>
+                    <th>Núcleo</th>
+                    <th>Data Saída</th>
+                    <th>Previsão</th>
+                    <th>Devolução</th>
+                    <th>Logística</th>
+                    <th>Motivo Falta</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in emprestimos %}
+                <tr>
+                    <td class="fw-bold">{{ e.item.nome }}</td>
+                    <td class="text-center">{{ e.quantidade_emprestada }}</td>
+                    <td class="text-center">{{ e.quantidade_devolvida|default:"—" }}</td>
+                    <td>{{ e.nome_solicitante }}</td>
+                    <td>
+                        {{ e.contato }}
+                        {% if e.email_solicitante %}<br><small>{{ e.email_solicitante }}</small>{% endif %}
+                    </td>
+                    <td>{{ e.responsavel_casa|default:"—" }}</td>
+                    <td>
+                        {% if e.tipo == 'EXTERNO' %}
+                        <span class="badge bg-warning text-dark">Ext</span>
+                        {% else %}
+                        <span class="badge bg-info">Int</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ e.projeto|default:"—" }}</td>
+                    <td>{% if e.nucleo %}{{ e.nucleo.nome }}{% else %}—{% endif %}</td>
+                    <td>{{ e.data_saida|date:"d/m/Y" }}</td>
+                    <td>{{ e.data_prevista|date:"d/m/Y" }}</td>
+                    <td>{{ e.data_devolucao|date:"d/m/Y"|default:"—" }}</td>
+                    <td><small>{{ e.logistica|default:"—" }}</small></td>
+                    <td><small class="text-danger">{{ e.motivo_falta|default:"—" }}</small></td>
+                    <td>
+                        {% if e.devolvido %}
+                        <span class="badge bg-success">✓</span>
+                        {% elif e.status_display == 'Atrasado' %}
+                        <span class="badge bg-danger">!</span>
+                        {% else %}
+                        <span class="badge bg-secondary">…</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-info">Nenhum empréstimo encontrado.</div>
+{% endif %}
+{% endblock %}

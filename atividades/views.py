@@ -6,8 +6,8 @@ from django.views.generic import ListView, CreateView, UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db import transaction
 
-from .models import RegistroAtividade, Projeto, TipoAtividade
-from .forms import ProjetoForm, TipoAtividadeFormSet, RegistroAtividadeForm, NaturezaDespesaFormSet
+from .models import RegistroAtividade, Projeto, TipoAtividade, Nucleo
+from .forms import ProjetoForm, TipoAtividadeFormSet, NucleoFormSet, RegistroAtividadeForm, NaturezaDespesaFormSet
 
 # --- Permissões ---
 def eh_monitor_ou_admin(user):
@@ -35,9 +35,11 @@ class ProjetoCreateView(LoginRequiredMixin, AdminRequiredMixin, CreateView):
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
         if self.request.POST:
+            data['nucleos'] = NucleoFormSet(self.request.POST)
             data['atividades'] = TipoAtividadeFormSet(self.request.POST)
             data['naturezas'] = NaturezaDespesaFormSet(self.request.POST)
         else:
+            data['nucleos'] = NucleoFormSet()
             data['atividades'] = TipoAtividadeFormSet()
             data['naturezas'] = NaturezaDespesaFormSet()
         data['titulo'] = 'Novo Projeto'
@@ -45,17 +47,20 @@ class ProjetoCreateView(LoginRequiredMixin, AdminRequiredMixin, CreateView):
 
     def form_valid(self, form):
         context = self.get_context_data()
+        nucleos = context['nucleos']
         atividades = context['atividades']
         naturezas = context['naturezas']
         with transaction.atomic():
             self.object = form.save()
-            if atividades.is_valid() and naturezas.is_valid():
+            if nucleos.is_valid() and atividades.is_valid() and naturezas.is_valid():
+                nucleos.instance = self.object
+                nucleos.save()
                 atividades.instance = self.object
                 atividades.save()
                 naturezas.instance = self.object
                 naturezas.save()
             else:
-                return self.render_to_response(self.get_context_data(form=form)) # Retorna com erros
+                return self.render_to_response(self.get_context_data(form=form))
         return super().form_valid(form)
 
 class ProjetoUpdateView(LoginRequiredMixin, AdminRequiredMixin, UpdateView):
@@ -67,9 +72,11 @@ class ProjetoUpdateView(LoginRequiredMixin, AdminRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
         if self.request.POST:
+            data['nucleos'] = NucleoFormSet(self.request.POST, instance=self.object)
             data['atividades'] = TipoAtividadeFormSet(self.request.POST, instance=self.object)
             data['naturezas'] = NaturezaDespesaFormSet(self.request.POST, instance=self.object)
         else:
+            data['nucleos'] = NucleoFormSet(instance=self.object)
             data['atividades'] = TipoAtividadeFormSet(instance=self.object)
             data['naturezas'] = NaturezaDespesaFormSet(instance=self.object)
         data['titulo'] = 'Editar Projeto'
@@ -77,11 +84,13 @@ class ProjetoUpdateView(LoginRequiredMixin, AdminRequiredMixin, UpdateView):
 
     def form_valid(self, form):
         context = self.get_context_data()
+        nucleos = context['nucleos']
         atividades = context['atividades']
         naturezas = context['naturezas']
         with transaction.atomic():
             self.object = form.save()
-            if atividades.is_valid() and naturezas.is_valid():
+            if nucleos.is_valid() and atividades.is_valid() and naturezas.is_valid():
+                nucleos.save()
                 atividades.save()
                 naturezas.save()
             else:
@@ -136,3 +145,12 @@ def load_turnos(request):
     else:
         turnos = Turno.objects.none()
     return render(request, 'atividades/turno_dropdown_list_options.html', {'turnos': turnos})
+
+@login_required
+def load_nucleos(request):
+    projeto_id = request.GET.get('projeto')
+    if projeto_id:
+        nucleos = Nucleo.objects.filter(projeto_id=projeto_id).order_by('nome')
+    else:
+        nucleos = Nucleo.objects.none()
+    return render(request, 'atividades/nucleo_dropdown_list_options.html', {'nucleos': nucleos})

@@ -61,7 +61,8 @@
 
         .total-row {
             font-weight: bold;
-            background-color: #f9f9f9;
+            background-color: #f0f0f0;
+            border-top: 2px solid #000;
         }
 
         .text-right {
@@ -88,6 +89,12 @@
             text-align: center;
             display: inline-block;
         }
+
+        .filter-info {
+            font-size: 8pt;
+            color: #666;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 
@@ -96,70 +103,50 @@
         <img src="{% static 'img/logo.png' %}" class="logo">
         <h2 style="margin: 0;">ONG SIGEP - Prestação de Contas</h2>
         <p style="margin: 5px 0;">Competência: {{ mes }}/{{ ano }}</p>
+        {% if projeto_selecionado %}
+        {% for p in projetos %}
+        {% if p.pk == projeto_selecionado %}
+        <p style="margin: 2px 0;"><strong>Projeto: {{ p.nome }}</strong></p>
+        {% endif %}
+        {% endfor %}
+        {% endif %}
         <small>Gerado em: {{ data_geracao|date:"d/m/Y H:i" }} | Por: {{ usuario.get_full_name }}</small>
     </div>
 
-    <!-- RECEITAS -->
-    <div class="section-title">1. RELATÓRIO DE ENTRADAS (RECEITAS)</div>
+    <!-- DESPESAS (Ordem Cronológica) -->
+    <div class="section-title">RELATÓRIO DE SAÍDAS (DESPESAS)</div>
     <table>
         <thead>
             <tr>
-                <th width="15%">Data</th>
-                <th width="20%">Categoria</th>
-                <th width="45%">Descrição</th>
-                <th width="20%" class="text-right">Valor</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for r in receitas %}
-            <tr>
-                <td>{{ r.data|date:"d/m/Y" }}</td>
-                <td>{{ r.get_categoria_display }}</td>
-                <td>{{ r.descricao }}</td>
-                <td class="text-right">R$ {{ r.valor }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="4">Nenhuma receita no período.</td>
-            </tr>
-            {% endfor %}
-            <tr class="total-row">
-                <td colspan="3" class="text-right">TOTAL DE ENTRADAS:</td>
-                <td class="text-right">R$ {{ total_receitas }}</td>
-            </tr>
-        </tbody>
-    </table>
-
-    <!-- DESPESAS -->
-    <div class="section-title">2. RELATÓRIO DE SAÍDAS (DESPESAS)</div>
-    <table>
-        <thead>
-            <tr>
-                <th width="12%">Data</th>
-                <th width="25%">Razão Social</th>
-                <th width="15%">Doc/NF</th>
-                <th width="15%">Projeto</th>
-                <th width="18%">Rúbrica</th>
+                <th width="5%">#</th>
+                <th width="10%">Data</th>
+                <th width="22%">Razão Social</th>
+                <th width="10%">Doc/NF</th>
+                <th width="13%">Projeto</th>
+                <th width="15%">Item</th>
+                <th width="10%">Ref.</th>
                 <th width="15%" class="text-right">Valor</th>
             </tr>
         </thead>
         <tbody>
             {% for d in despesas %}
             <tr>
+                <td>{{ forloop.counter }}</td>
                 <td>{{ d.data_emissao|date:"d/m/Y" }}</td>
                 <td>{{ d.razao_social }}</td>
                 <td>{{ d.nota_fiscal }}</td>
                 <td>{{ d.projeto }}</td>
-                <td>{{ d.rubrica }}</td>
+                <td>{% if d.item %}{{ d.item }}{% else %}—{% endif %}</td>
+                <td>{{ d.mes_referencia }}/{{ d.ano_referencia }}</td>
                 <td class="text-right">R$ {{ d.valor }}</td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="6">Nenhuma despesa no período.</td>
+                <td colspan="8">Nenhuma despesa no período.</td>
             </tr>
             {% endfor %}
             <tr class="total-row">
-                <td colspan="5" class="text-right">TOTAL DE SAÍDAS:</td>
+                <td colspan="7" class="text-right">TOTAL DE SAÍDAS:</td>
                 <td class="text-right">R$ {{ total_despesas }}</td>
             </tr>
         </tbody>
@@ -168,17 +155,9 @@
     <!-- RESUMO -->
     <div class="summary-box">
         <table>
-            <tr>
-                <td>(+) Total Entradas:</td>
-                <td class="text-right">R$ {{ total_receitas }}</td>
-            </tr>
-            <tr>
-                <td>(-) Total Saídas:</td>
-                <td class="text-right">R$ {{ total_despesas }}</td>
-            </tr>
             <tr class="total-row">
-                <td>(=) SALDO DO PERÍODO:</td>
-                <td class="text-right">{{ saldo_periodo }}</td>
+                <td>TOTAL DE SAÍDAS:</td>
+                <td class="text-right">R$ {{ total_despesas }}</td>
             </tr>
         </table>
     </div>

@@ -32,11 +32,73 @@
                         </div>
                     </div>
 
-                    <h5 class="text-primary mt-4 mb-3">Programa</h5>
-                    <div class="row">
-                        <div class="col-md-4">{{ form.projeto|as_crispy_field }}</div>
-                        <div class="col-md-4">{{ form.atividade|as_crispy_field }}</div>
-                        <div class="col-md-4">{{ form.turno|as_crispy_field }}</div>
+                    <h5 class="text-primary mt-4 mb-3">Vínculos</h5>
+                    <div class="alert alert-light border">
+                        <small class="text-muted"><i class="bi bi-info-circle"></i> Adicione os vínculos do
+                            beneficiário: Projeto → Núcleo → Atividade → Turno.</small>
+                    </div>
+
+                    {{ vinculos.management_form }}
+                    <div id="vinculos-list">
+                        {% for vinculo_form in vinculos %}
+                        <div class="card mb-3 border-light bg-light vinculo-item">
+                            <div class="card-body">
+                                <div class="row align-items-start">
+                                    <div class="col-md-3">
+                                        {{ vinculo_form.id }}
+                                        {{ vinculo_form.projeto|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-3">
+                                        {{ vinculo_form.nucleo|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-3">
+                                        {{ vinculo_form.atividade|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-2">
+                                        {{ vinculo_form.turno|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-1 text-center pt-4">
+                                        {% if vinculos.can_delete %}
+                                        <div class="d-none">{{ vinculo_form.DELETE }}</div>
+                                        <button type="button" class="btn btn-danger btn-sm remove-vinculo"><i
+                                                class="bi bi-x-lg"></i></button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <button type="button" id="add-vinculo" class="btn btn-outline-primary btn-sm mt-2">
+                        <i class="bi bi-plus-circle"></i> Adicionar Vínculo
+                    </button>
+
+                    <!-- Template oculto para novo vínculo -->
+                    <div id="empty-vinculo-form" style="display:none;">
+                        <div class="card mb-3 border-light bg-light vinculo-item">
+                            <div class="card-body">
+                                <div class="row align-items-start">
+                                    <div class="col-md-3">
+                                        {{ vinculos.empty_form.id }}
+                                        {{ vinculos.empty_form.projeto|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-3">
+                                        {{ vinculos.empty_form.nucleo|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-3">
+                                        {{ vinculos.empty_form.atividade|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-2">
+                                        {{ vinculos.empty_form.turno|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-1 text-center pt-4">
+                                        <button type="button" class="btn btn-danger btn-sm remove-vinculo"><i
+                                                class="bi bi-x-lg"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <h5 class="text-primary mt-4 mb-3">Saúde e Acessibilidade</h5>
@@ -63,11 +125,6 @@
         </div>
     </div>
 </div>
-</form>
-</div>
-</div>
-</div>
-</div>
 
 <script src="https://unpkg.com/imask"></script>
 <script>
@@ -86,24 +143,18 @@
         // --- LÓGICA CONDICIONAL ---
         function toggleField(checkboxId, fieldId) {
             const checkbox = document.getElementById(checkboxId);
-            // O campo 'fieldId' é o ID do input gerado pelo Django.
-            // O Crispy Forms envolve o input em uma div com classe 'mb-3'.
-            // Vamos esconder essa div pai para sumir com o label também.
             const input = document.getElementById(fieldId);
             const parentDiv = input ? input.closest('.mb-3') || input.parentNode : null;
 
             if (checkbox && parentDiv) {
-                // Função interna para atualizar visibilidade
                 const update = () => {
                     if (checkbox.checked) {
                         parentDiv.style.display = 'block';
                     } else {
                         parentDiv.style.display = 'none';
-                        input.value = ''; // Limpa o valor ao esconder
+                        input.value = '';
                     }
                 };
-
-                // Executa agora e no evento change
                 update();
                 checkbox.addEventListener('change', update);
             }
@@ -132,7 +183,6 @@
                 responsavelSection.style.display = 'block';
             } else {
                 responsavelSection.style.display = 'none';
-                // Limpa os campos se esconder
                 document.getElementById('id_responsavel').value = '';
                 document.getElementById('id_grau_parentesco').value = '';
             }
@@ -140,9 +190,36 @@
 
         if (dataNascInput) {
             dataNascInput.addEventListener('change', checkAge);
-            dataNascInput.addEventListener('blur', checkAge); // Garante update ao sair do campo
-            checkAge(); // Check inicial (edição)
+            dataNascInput.addEventListener('blur', checkAge);
+            checkAge();
         }
+
+        // --- LÓGICA DE FORMSET DINÂMICO (VÍNCULOS) ---
+        const addVinculoBtn = document.getElementById('add-vinculo');
+        const vinculosList = document.getElementById('vinculos-list');
+        const emptyVinculoForm = document.getElementById('empty-vinculo-form').firstElementChild;
+        const totalVinculos = document.getElementById('id_vinculos-TOTAL_FORMS');
+
+        addVinculoBtn.addEventListener('click', function () {
+            const newForm = emptyVinculoForm.cloneNode(true);
+            const currentForms = parseInt(totalVinculos.value);
+            newForm.innerHTML = newForm.innerHTML.replace(/__prefix__/g, currentForms);
+            vinculosList.appendChild(newForm);
+            totalVinculos.value = currentForms + 1;
+        });
+
+        document.addEventListener('click', function (e) {
+            if (e.target && (e.target.classList.contains('remove-vinculo') || e.target.closest('.remove-vinculo'))) {
+                const card = e.target.closest('.vinculo-item');
+                const deleteInput = card.querySelector('input[name$="-DELETE"]');
+                if (deleteInput) {
+                    deleteInput.checked = true;
+                    card.style.display = 'none';
+                } else {
+                    card.remove();
+                }
+            }
+        });
     });
 </script>
 {% endblock %}

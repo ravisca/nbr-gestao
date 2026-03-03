@@ -1,5 +1,5 @@
 from django import forms
-from .models import Item
+from .models import Item, Emprestimo
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Row, Column, Field, HTML, Div
 
@@ -11,15 +11,13 @@ class ItemForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
-        self.helper.form_tag = False # We handle the form tag in the template
+        self.helper.form_tag = False
         
-        # Define the layout with input groups for Categoria and Unidade
         self.helper.layout = Layout(
             Row(
                 Column('nome', css_class='col-md-12 mb-3'),
             ),
             Row(
-                # Categoria with + Button
                 Column(
                     Div(
                         Field('categoria', wrapper_class=''),
@@ -28,7 +26,6 @@ class ItemForm(forms.ModelForm):
                     ),
                     css_class='col-md-6 mb-3'
                 ),
-                # Unidade with + Button
                 Column(
                     Div(
                         Field('unidade', wrapper_class=''),
@@ -44,6 +41,65 @@ class ItemForm(forms.ModelForm):
             ),
         )
 
+
+class EmprestimoExternoForm(forms.ModelForm):
+    class Meta:
+        model = Emprestimo
+        fields = [
+            'item', 'quantidade_emprestada',
+            'nome_solicitante', 'cpf_solicitante', 'contato', 'email_solicitante', 'endereco',
+            'responsavel_casa',
+            'data_saida', 'data_saida_real', 'data_prevista',
+            'observacoes',
+        ]
+        widgets = {
+            'data_saida': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            'data_saida_real': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            'data_prevista': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            'observacoes': forms.Textarea(attrs={'rows': 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.required = True
+
+
+class EmprestimoInternoForm(forms.ModelForm):
+    class Meta:
+        model = Emprestimo
+        fields = [
+            'item', 'quantidade_emprestada',
+            'projeto', 'nucleo',
+            'nome_solicitante', 'contato',
+            'responsavel_casa',
+            'data_saida', 'data_saida_real', 'data_prevista',
+            'logistica', 'observacoes',
+        ]
+        widgets = {
+            'data_saida': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            'data_saida_real': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            'data_prevista': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            'logistica': forms.Textarea(attrs={'rows': 3}),
+            'observacoes': forms.Textarea(attrs={'rows': 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.required = True
+
+
+class DevolucaoForm(forms.ModelForm):
+    class Meta:
+        model = Emprestimo
+        fields = ['quantidade_devolvida', 'data_devolucao', 'motivo_falta']
+        widgets = {
+            'data_devolucao': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            'motivo_falta': forms.Textarea(attrs={'rows': 3}),
+        }
+
+
 class MovimentacaoSaidaItemForm(forms.Form):
     item = forms.ModelChoiceField(queryset=Item.objects.all().order_by('nome'), label="Item", widget=forms.Select(attrs={'class': 'form-select select2'}))
     quantidade = forms.IntegerField(label="Quantidade", widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '1'}))
@@ -52,17 +108,14 @@ class MovimentacaoSaidaItemForm(forms.Form):
         cleaned_data = super().clean()
         item = cleaned_data.get('item')
         quantidade = cleaned_data.get('quantidade')
-
         if item and quantidade:
             if item.quantidade_atual < quantidade:
                 self.add_error('quantidade', f"Estoque insuficiente para {item.nome}. Disponível: {item.quantidade_atual}")
         return cleaned_data
 
+
 class SaidaOptionsForm(forms.Form):
-    # Opção para marcar se é empréstimo interno
     is_emprestimo = forms.BooleanField(required=False, label="É Empréstimo Interno?", widget=forms.CheckboxInput(attrs={'onchange': 'toggleLoanFields()'}))
-    
-    # Campos de Empréstimo
     nome_solicitante = forms.CharField(required=False, label="Nome do Solicitante", widget=forms.TextInput(attrs={'class': 'form-control'}))
     contato = forms.CharField(required=False, label="Contato / Whatsapp", widget=forms.TextInput(attrs={'class': 'form-control'}))
     data_prevista = forms.DateField(required=False, label="Previsão de Devolução", widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}))
@@ -70,11 +123,9 @@ class SaidaOptionsForm(forms.Form):
     def clean(self):
         cleaned_data = super().clean()
         is_emprestimo = cleaned_data.get('is_emprestimo')
-        
         if is_emprestimo:
             if not cleaned_data.get('nome_solicitante'):
                 self.add_error('nome_solicitante', "Nome do solicitante é obrigatório para empréstimos.")
             if not cleaned_data.get('data_prevista'):
                 self.add_error('data_prevista', "Data prevista de devolução é obrigatória.")
-        
         return cleaned_data

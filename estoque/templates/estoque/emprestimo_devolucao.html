@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Registrar Devolução | SIGEP{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h4 class="mb-0"><i class="bi bi-box-arrow-in-down"></i> Registrar Devolução</h4>
+            </div>
+            <div class="card-body">
+
+                <!-- Resumo do Empréstimo -->
+                <div class="alert alert-light border mb-4">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <strong>Item:</strong> {{ emprestimo.item.nome }}
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Qtd Emprestada:</strong> <span class="badge bg-primary fs-6">{{
+                                emprestimo.quantidade_emprestada }}</span>
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Solicitante:</strong> {{ emprestimo.nome_solicitante }}
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-md-4">
+                            <strong>Data Saída:</strong> {{ emprestimo.data_saida|date:"d/m/Y" }}
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Previsão:</strong> {{ emprestimo.data_prevista|date:"d/m/Y" }}
+                        </div>
+                        <div class="col-md-4">
+                            {% if emprestimo.tipo == 'EXTERNO' %}
+                            <span class="badge bg-warning text-dark">Externo</span>
+                            {% else %}
+                            <span class="badge bg-info">Interno</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <h5 class="text-primary mb-3">Dados da Devolução</h5>
+                    <div class="row">
+                        <div class="col-md-6">{{ form.quantidade_devolvida|as_crispy_field }}</div>
+                        <div class="col-md-6">{{ form.data_devolucao|as_crispy_field }}</div>
+                    </div>
+
+                    <div id="motivo-section" style="display:none;">
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i> A quantidade devolvida é menor que a emprestada.
+                            Informe o motivo.
+                        </div>
+                        {{ form.motivo_falta|as_crispy_field }}
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <a href="{% url 'estoque_emprestimo_list' %}" class="btn btn-outline-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-success"><i class="bi bi-check-lg"></i> Confirmar
+                            Devolução</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const qtdDevolvida = document.getElementById('id_quantidade_devolvida');
+        const motivoSection = document.getElementById('motivo-section');
+        const qtdEmprestada = {{ emprestimo.quantidade_emprestada }
+    };
+
+    function checkMotivo() {
+        const val = parseInt(qtdDevolvida.value) || 0;
+        if (val < qtdEmprestada && val > 0) {
+            motivoSection.style.display = 'block';
+        } else {
+            motivoSection.style.display = 'none';
+        }
+    }
+
+    qtdDevolvida.addEventListener('input', checkMotivo);
+    checkMotivo();
+    });
+</script>
+{% endblock %}

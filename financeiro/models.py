@@ -135,8 +135,14 @@ class Despesa(models.Model):
     responsavel = models.ForeignKey(User, on_delete=models.PROTECT, editable=False)
     data_lancamento = models.DateTimeField(auto_now_add=True)
 
+    # Campos de inutilização (soft delete)
+    inutilizado = models.BooleanField(default=False, verbose_name="Inutilizado?")
+    motivo_inutilizacao = models.TextField(blank=True, null=True, verbose_name="Motivo da Inutilização")
+    data_inutilizacao = models.DateTimeField(null=True, blank=True, verbose_name="Data da Inutilização")
+
     def __str__(self):
-        return f"SAÍDA: R$ {self.valor} - {self.razao_social}"
+        prefix = "[INUTILIZADO] " if self.inutilizado else ""
+        return f"{prefix}SAÍDA: R$ {self.valor} - {self.razao_social}"
 
     class Meta:
         verbose_name = "Despesa (Prestação de Contas)"
@@ -166,3 +172,15 @@ class Despesa(models.Model):
             self.conta.save()
             
         super().save(*args, **kwargs)
+
+    def inutilizar(self, motivo=''):
+        """Marca a despesa como inutilizada e devolve o saldo à conta."""
+        if self.inutilizado:
+            return  # Já inutilizado
+        self.inutilizado = True
+        self.motivo_inutilizacao = motivo
+        self.data_inutilizacao = timezone.now()
+        if self.conta:
+            self.conta.saldo_atual += self.valor
+            self.conta.save()
+        self.save()

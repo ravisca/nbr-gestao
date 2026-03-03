@@ -43,41 +43,40 @@ class MovimentacaoAdmin(admin.ModelAdmin):
 
 @admin.register(Emprestimo)
 class EmprestimoAdmin(admin.ModelAdmin):
-    list_display = ('item', 'quantidade_emprestada', 'nome_solicitante', 'data_prevista', 'status_devolucao', 'interno')
-    list_filter = ('devolvido', 'data_saida', 'interno')
+    list_display = ('item', 'quantidade_emprestada', 'nome_solicitante', 'tipo', 'data_prevista', 'status_devolucao')
+    list_filter = ('devolvido', 'data_saida', 'tipo')
     search_fields = ('nome_solicitante', 'cpf_solicitante', 'item__nome')
-    autocomplete_fields = ['item'] 
+    autocomplete_fields = ['item']
 
     def status_devolucao(self, obj):
         if obj.devolvido:
-            # Lógica visual: Se devolveu tudo (verde), se faltou algo (laranja)
             if obj.quantidade_devolvida and obj.quantidade_devolvida < obj.quantidade_emprestada:
-                return format_html('<span style="color: orange;">⚠️ Devolução Parcial ({}/{})</span>', obj.quantidade_devolvida, obj.quantidade_emprestada)
-            
-            # CORREÇÃO AQUI: Usamos {} para injetar o texto, satisfazendo o Django
+                return format_html('<span style="color: orange;">⚠️ Parcial ({}/{})</span>', obj.quantidade_devolvida, obj.quantidade_emprestada)
             return format_html('<span style="color: green;">{}</span>', "✅ Concluído")
-            
+
         if obj.data_prevista < date.today():
             atraso = (date.today() - obj.data_prevista).days
             return format_html('<span style="color: red; font-weight: bold;">⚠️ ATRASADO ({} dias)</span>', atraso)
-        
-        # CORREÇÃO AQUI TAMBÉM: Usamos {} para injetar o texto
+
         return format_html('<span style="color: blue;">{}</span>', "⏳ Em Aberto")
-    
+
     status_devolucao.short_description = "Situação"
 
     fieldsets = (
         ('Dados do Solicitante', {
-            'fields': ('nome_solicitante', 'cpf_solicitante', 'contato', 'endereco', 'interno')
+            'fields': ('tipo', 'nome_solicitante', 'cpf_solicitante', 'contato', 'email_solicitante', 'endereco', 'responsavel_casa')
+        }),
+        ('Dados Internos', {
+            'fields': ('projeto', 'nucleo', 'logistica'),
+            'classes': ('collapse',),
         }),
         ('O Que Foi Levado?', {
-            'fields': ('item', 'quantidade_emprestada', 'data_saida', 'data_prevista')
+            'fields': ('item', 'quantidade_emprestada', 'data_saida', 'data_saida_real', 'data_prevista')
         }),
         ('Retorno', {
             'fields': ('data_devolucao', 'quantidade_devolvida', 'motivo_falta', 'observacoes')
         }),
     )
 
-    # Conecta o Javascript
     class Media:
         js = ('estoque/js/admin_emprestimo.js',)

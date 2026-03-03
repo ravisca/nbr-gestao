@@ -1,12 +1,20 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView
-from django.contrib.auth.mixins import LoginRequiredMixin
-from .models import Item, Movimentacao, Emprestimo
 from django.views import View
-from core.utils import render_to_pdf
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import JsonResponse, HttpResponse
+from django.template.loader import render_to_string
+from django.forms import modelform_factory, formset_factory
 from django.utils import timezone
+from django.db import transaction
 
+from .models import Item, Movimentacao, Emprestimo, Categoria, UnidadeMedida
+from .forms import ItemForm, EmprestimoExternoForm, EmprestimoInternoForm, DevolucaoForm, MovimentacaoSaidaItemForm, SaidaOptionsForm
+from core.utils import render_to_pdf
+
+
+# === ITENS ===
 
 class ItemListView(LoginRequiredMixin, ListView):
     model = Item
@@ -21,14 +29,11 @@ class ItemListView(LoginRequiredMixin, ListView):
             queryset = queryset.filter(nome__icontains=busca)
         return queryset.order_by('nome')
 
-from .forms import ItemForm
-
 class ItemCreateView(LoginRequiredMixin, CreateView):
     model = Item
     form_class = ItemForm
     template_name = 'estoque/item_form.html'
     success_url = reverse_lazy('estoque_list')
-    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['titulo'] = 'Novo Item'
@@ -39,23 +44,23 @@ class ItemUpdateView(LoginRequiredMixin, UpdateView):
     form_class = ItemForm
     template_name = 'estoque/item_form.html'
     success_url = reverse_lazy('estoque_list')
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['titulo'] = 'Editar Item'
         return context
+
+
+# === MOVIMENTAÇÕES ===
 
 class MovimentacaoEntradaView(LoginRequiredMixin, CreateView):
     model = Movimentacao
     template_name = 'estoque/movimentacao_form.html'
     fields = ['item', 'quantidade', 'origem_destino', 'observacao']
     success_url = reverse_lazy('estoque_list')
-
     def form_valid(self, form):
         form.instance.tipo = 'ENTRADA'
         form.instance.usuario = self.request.user
         return super().form_valid(form)
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['titulo'] = 'Nova Entrada (Doação/Compra)'
@@ -66,16 +71,82 @@ class MovimentacaoSaidaView(LoginRequiredMixin, CreateView):
     template_name = 'estoque/movimentacao_form.html'
     fields = ['item', 'quantidade', 'origem_destino', 'observacao']
     success_url = reverse_lazy('estoque_list')
-
     def form_valid(self, form):
         form.instance.tipo = 'SAIDA'
         form.instance.usuario = self.request.user
         return super().form_valid(form)
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['titulo'] = 'Nova Saída (Uso/Consumo)'
         return context
+
+
+# === EMPRÉSTIMOS ===
+
+class EmprestimoListView(LoginRequiredMixin, ListView):
+    model = Emprestimo
+    template_name = 'estoque/emprestimo_list.html'
+    context_object_name = 'emprestimos'
+    paginate_by = 20
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        status = self.request.GET.get('status')
+        tipo = self.request.GET.get('tipo')
+        if status == 'pendente':
+            queryset = queryset.filter(devolvido=False)
+        elif status == 'devolvido':
+            queryset = queryset.filter(devolvido=True)
+        if tipo in ('EXTERNO', 'INTERNO'):
+            queryset = queryset.filter(tipo=tipo)
+        return queryset
+
+class EmprestimoExternoCreateView(LoginRequiredMixin, CreateView):
+    model = Emprestimo
+    form_class = EmprestimoExternoForm
+    template_name = 'estoque/emprestimo_form.html'
+    success_url = reverse_lazy('estoque_emprestimo_list')
+
+    def form_valid(self, form):
+        form.instance.tipo = 'EXTERNO'
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['titulo'] = 'Novo Empréstimo Externo'
+        context['tipo_emprestimo'] = 'EXTERNO'
+        return context
+
+class EmprestimoInternoCreateView(LoginRequiredMixin, CreateView):
+    model = Emprestimo
+    form_class = EmprestimoInternoForm
+    template_name = 'estoque/emprestimo_form.html'
+    success_url = reverse_lazy('estoque_emprestimo_list')
+
+    def form_valid(self, form):
+        form.instance.tipo = 'INTERNO'
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['titulo'] = 'Novo Empréstimo Interno / Operação'
+        context['tipo_emprestimo'] = 'INTERNO'
+        return context
+
+class EmprestimoDevolucaoView(LoginRequiredMixin, UpdateView):
+    model = Emprestimo
+    form_class = DevolucaoForm
+    template_name = 'estoque/emprestimo_devolucao.html'
+    success_url = reverse_lazy('estoque_emprestimo_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['titulo'] = 'Registrar Devolução'
+        context['emprestimo'] = self.object
+        return context
+
+
+# === RELATÓRIOS ===
 
 class RelatorioEstoquePdfView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
@@ -83,16 +154,10 @@ class RelatorioEstoquePdfView(LoginRequiredMixin, View):
         mes = request.GET.get('mes', hoje.strftime('%m'))
         ano = request.GET.get('ano', hoje.year)
 
-        # 1. Entradas e Saídas (Model Movimentacao)
         movimentacoes = Movimentacao.objects.filter(data__month=mes, data__year=ano).order_by('data')
         entradas = movimentacoes.filter(tipo='ENTRADA')
         saidas = movimentacoes.filter(tipo='SAIDA')
-
-        # 2. Empréstimos (Model Emprestimo)
-        # Empréstimos feitos no mês (data_saida)
         emprestimos_saida = Emprestimo.objects.filter(data_saida__month=mes, data_saida__year=ano).order_by('data_saida')
-        
-        # Empréstimos devolvidos no mês (data_devolucao)
         emprestimos_retorno = Emprestimo.objects.filter(data_devolucao__month=mes, data_devolucao__year=ano, devolvido=True).order_by('data_devolucao')
 
         context = {
@@ -105,15 +170,28 @@ class RelatorioEstoquePdfView(LoginRequiredMixin, View):
             'data_geracao': hoje,
             'usuario': request.user,
         }
-
         return render_to_pdf('estoque/relatorio_movimentacao.html', context)
 
 
-# --- QUICK ADD VIEWS ---
-from django.http import JsonResponse, HttpResponse
-from django.template.loader import render_to_string
-from .models import Item, Movimentacao, Categoria, UnidadeMedida, Emprestimo
-from django.forms import modelform_factory
+class RelatorioEmprestimoView(LoginRequiredMixin, ListView):
+    model = Emprestimo
+    template_name = 'estoque/relatorio_emprestimos.html'
+    context_object_name = 'emprestimos'
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        tipo = self.request.GET.get('tipo')
+        if tipo in ('EXTERNO', 'INTERNO'):
+            queryset = queryset.filter(tipo=tipo)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['tipo_selecionado'] = self.request.GET.get('tipo', '')
+        return context
+
+
+# === QUICK ADD & BATCH ===
 
 class GenericPopupCreateView(View):
     model = None
@@ -144,60 +222,47 @@ class UnidadeCreatePopup(GenericPopupCreateView):
     fields = ['nome', 'sigla']
     title = "Nova Unidade de Medida"
 
-from django.forms import formset_factory
-from django.shortcuts import redirect
-from .forms import MovimentacaoSaidaItemForm, SaidaOptionsForm
 
 class MovimentacaoSaidaLoteView(LoginRequiredMixin, View):
     template_name = 'estoque/movimentacao_saida_lote.html'
-    
+
     def get(self, request):
-        # Cria um formset com 1 formulário inicial
         MovimentacaoFormSet = formset_factory(MovimentacaoSaidaItemForm, extra=1)
         formset = MovimentacaoFormSet()
-        
-        # Formulário de Opções (Empréstimo)
         options_form = SaidaOptionsForm()
-        
         return render(request, self.template_name, {
-            'formset': formset, 
+            'formset': formset,
             'options_form': options_form,
             'titulo': 'Saída em Lote / Empréstimo Interno'
         })
-    
+
     def post(self, request):
         MovimentacaoFormSet = formset_factory(MovimentacaoSaidaItemForm)
         formset = MovimentacaoFormSet(request.POST)
         options_form = SaidaOptionsForm(request.POST)
-        
+
         if formset.is_valid() and options_form.is_valid():
             is_emprestimo = options_form.cleaned_data.get('is_emprestimo')
-            
-            # Dados do Empréstimo (se houver)
             nome_solicitante = options_form.cleaned_data.get('nome_solicitante')
             contato = options_form.cleaned_data.get('contato')
             data_prevista = options_form.cleaned_data.get('data_prevista')
-            
+
             for form in formset:
-                if form.cleaned_data: # Ignora formulários vazios
+                if form.cleaned_data:
                     item = form.cleaned_data['item']
                     quantidade = form.cleaned_data['quantidade']
-                    
+
                     if is_emprestimo:
-                        # Cria EMPRÉSTIMO
                         Emprestimo.objects.create(
                             item=item,
-                            quantidade_emprestada=int(quantidade), # Garante int
+                            quantidade_emprestada=int(quantidade),
                             nome_solicitante=nome_solicitante,
                             contato=contato,
                             data_prevista=data_prevista,
-                            interno=True,
+                            tipo='INTERNO',
                             observacoes="Criado via Saída em Lote"
                         )
-                        # A lógica do save() do Emprestimo já baixa o estoque
-                        
                     else:
-                        # Cria MOVIMENTAÇÃO (Saída Comum)
                         Movimentacao.objects.create(
                             item=item,
                             tipo='SAIDA',
@@ -205,11 +270,10 @@ class MovimentacaoSaidaLoteView(LoginRequiredMixin, View):
                             usuario=request.user,
                             observacao="Saída em Lote"
                         )
-            
             return redirect('estoque_list')
-        
+
         return render(request, self.template_name, {
-            'formset': formset, 
+            'formset': formset,
             'options_form': options_form,
             'titulo': 'Saída em Lote / Empréstimo Interno'
         })

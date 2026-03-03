@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib import admin  # <--- IMPORTANTE: Adicionei esta linha
+from django.contrib import admin
 from datetime import date
 
 class Turno(models.Model):
@@ -24,7 +24,6 @@ class Beneficiario(models.Model):
     nome_completo = models.CharField(max_length=200, verbose_name="Nome Completo")
     data_nascimento = models.DateField(verbose_name="Data de Nascimento")
     cpf = models.CharField(max_length=14, unique=True, verbose_name="CPF")
-    cpf = models.CharField(max_length=14, unique=True, verbose_name="CPF")
     telefone = models.CharField(max_length=20, verbose_name="Telefone para Contato")
     foto = models.ImageField(upload_to='beneficiarios/fotos/%Y/%m/', blank=True, null=True, verbose_name="Foto do Beneficiário")
 
@@ -34,11 +33,6 @@ class Beneficiario(models.Model):
     necessita_acessibilidade = models.BooleanField(default=False, verbose_name="Necessita de Acessibilidade?")
     descricao_acessibilidade = models.CharField(max_length=255, blank=True, null=True, verbose_name="Qual acessibilidade?")
 
-    # Dados do Projeto/ONG
-    projeto = models.ForeignKey('atividades.Projeto', on_delete=models.PROTECT, verbose_name="Projeto")
-    atividade = models.ForeignKey('atividades.TipoAtividade', on_delete=models.PROTECT, verbose_name="Atividade / Qtd. Atividades")
-    turno = models.ForeignKey(Turno, on_delete=models.PROTECT, verbose_name="Turno")
-    
     # Responsável
     responsavel = models.CharField(max_length=200, blank=True, null=True, verbose_name="Responsável")
     grau_parentesco = models.CharField(max_length=50, blank=True, null=True, verbose_name="Grau de Parentesco")
@@ -62,9 +56,28 @@ class Beneficiario(models.Model):
         return 0
 
     @property
-    @admin.display(description="18+", boolean=True) # <--- CORREÇÃO AQUI
+    @admin.display(description="18+", boolean=True)
     def eh_maior_idade(self):
         """Retorna True se for 18+, usado para a coluna 18+"""
         return self.idade >= 18
-    
-    # REMOVI AS LINHAS QUE DAVAM ERRO AQUI EMBAIXO
+
+
+class VinculoBeneficiario(models.Model):
+    """Representa um vínculo do beneficiário: Projeto → Núcleo → Atividade → Turno"""
+    beneficiario = models.ForeignKey(Beneficiario, on_delete=models.CASCADE, related_name="vinculos")
+    projeto = models.ForeignKey('atividades.Projeto', on_delete=models.PROTECT, verbose_name="Projeto")
+    nucleo = models.ForeignKey('atividades.Nucleo', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Núcleo")
+    atividade = models.ForeignKey('atividades.TipoAtividade', on_delete=models.PROTECT, verbose_name="Atividade")
+    turno = models.ForeignKey(Turno, on_delete=models.PROTECT, verbose_name="Turno")
+
+    def __str__(self):
+        parts = [str(self.projeto)]
+        if self.nucleo:
+            parts.append(str(self.nucleo.nome))
+        parts.append(str(self.atividade.nome))
+        parts.append(str(self.turno))
+        return " → ".join(parts)
+
+    class Meta:
+        verbose_name = "Vínculo"
+        verbose_name_plural = "Vínculos"
