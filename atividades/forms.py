@@ -17,7 +17,7 @@ NucleoFormSet = inlineformset_factory(
     Projeto,
     Nucleo,
     fields=['nome'],
-    extra=1,
+    extra=0,
     can_delete=True
 )
 
@@ -35,7 +35,7 @@ TipoAtividadeFormSet = inlineformset_factory(
     TipoAtividade, 
     form=TipoAtividadeForm,
     fields=['nome', 'turnos'], 
-    extra=1, 
+    extra=0, 
     can_delete=True
 )
 
@@ -64,18 +64,29 @@ class NaturezaDespesaForm(forms.ModelForm):
             itens_str = self.cleaned_data.get('novos_itens')
             if itens_str:
                 nomes = [n.strip() for n in itens_str.replace('\n', ',').split(',') if n.strip()]
-                # Encontra o último código se existir, ou começa do 1
-                last_item = instance.itens.order_by('-id').first() # Simplificação: incrementa sequencialmente
+                # Encontra o maior código (número sequencial final) existente para esta Natureza
+                max_seq = 0
+                for item in instance.itens.all():
+                    if item.codigo:
+                        try:
+                            # Tenta pegar a última parte do código separada por ponto
+                            item_seq = int(item.codigo.split('.')[-1])
+                            if item_seq > max_seq:
+                                max_seq = item_seq
+                        except (ValueError, IndexError):
+                            pass
                 
-                # Vamos simplificar: assume que o usuário quer 1.1, 1.2...
-                # Se já tiver itens, teríamos que parsear, mas para MVP vamos usar contador simples
-                existing_count = instance.itens.count()
+                seq = max_seq
+                
+                nomes_existentes = {item.nome.strip().lower() for item in instance.itens.all()}
+                nomes_ignorados = []
                 
                 for i, nome in enumerate(nomes, start=1):
-                    # Gera código: Natureza.Codigo + . + Sequencial
-                    # Ex: Natureza 1 -> Item 1.1, 1.2
-                    # Ex: Natureza 2.1 -> Item 2.1.1, 2.1.2 
-                    seq = existing_count + i
+                    if nome.lower() in nomes_existentes:
+                        nomes_ignorados.append(nome)
+                        continue
+                        
+                    seq += 1
                     novo_codigo = f"{instance.codigo}.{seq}"
                     
                     ItemDespesa.objects.create(
@@ -83,6 +94,12 @@ class NaturezaDespesaForm(forms.ModelForm):
                         codigo=novo_codigo,
                         nome=nome
                     )
+                    nomes_existentes.add(nome.lower())
+                
+                if nomes_ignorados:
+                    if not hasattr(self, 'nomes_ignorados_warning_buffer'):
+                        self.nomes_ignorados_warning_buffer = []
+                    self.nomes_ignorados_warning_buffer.extend(nomes_ignorados)
         return instance
 
 NaturezaDespesaFormSet = inlineformset_factory(
@@ -90,7 +107,7 @@ NaturezaDespesaFormSet = inlineformset_factory(
     NaturezaDespesa,
     form=NaturezaDespesaForm,
     fields=['codigo', 'nome'], # 'novos_itens' é processado manualmente no form, mas precisa estar no fields? Não do modelform factory.
-    extra=1,
+    extra=0,
     can_delete=True
 ) 
 # Hack: Adicionamos o campo extra na definição do formset? Não, o form já tem.

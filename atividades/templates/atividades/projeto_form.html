@@ -115,6 +115,26 @@
                                     </div>
                                     <div class="col-md-5">
                                         {{ form_natureza.novos_itens|as_crispy_field }}
+
+                                        {% if form_natureza.instance.pk and form_natureza.instance.itens.exists %}
+                                        <div class="mt-2 text-start">
+                                            <h6 class="text-secondary small mb-1">Itens Cadastrados:</h6>
+                                            <ul class="list-group list-group-sm">
+                                                {% for i_despesa in form_natureza.instance.itens.all %}
+                                                <li class="list-group-item d-flex justify-content-between align-items-center py-1"
+                                                    id="item-despesa-{{ i_despesa.id }}">
+                                                    <small class="text-muted">
+                                                        {{ i_despesa.codigo }} - {{ i_despesa.nome }}
+                                                    </small>
+                                                    <button type="button"
+                                                        class="btn btn-sm btn-outline-danger delete-item-despesa pt-0 pb-0 ps-1 pe-1 ms-2"
+                                                        data-id="{{ i_despesa.id }}" title="Excluir Item"><i
+                                                            class="bi bi-trash" style="font-size: 0.8rem;"></i></button>
+                                                </li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                        {% endif %}
                                     </div>
                                     <div class="col-md-1 text-center pt-4">
                                         {% if naturezas.can_delete %}
@@ -263,6 +283,42 @@
                                         row.style.display = 'none';
                                     } else {
                                         row.remove();
+                                    }
+                                }
+
+                                // --- Lógica Exclusão Item Despesa (AJAX) ---
+                                if (e.target && (e.target.classList.contains('delete-item-despesa') || e.target.closest('.delete-item-despesa'))) {
+                                    e.preventDefault();
+                                    const btn = e.target.classList.contains('delete-item-despesa') ? e.target : e.target.closest('.delete-item-despesa');
+                                    const itemId = btn.getAttribute('data-id');
+
+                                    if (confirm('Tem certeza que deseja excluir este item permanentemente?')) {
+                                        fetch(`${window.location.origin}/atividades/ajax/delete-item-despesa/${itemId}/`, {
+                                            method: 'POST',
+                                            headers: {
+                                                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                                                'X-Requested-With': 'XMLHttpRequest'
+                                            },
+                                            credentials: 'same-origin'
+                                        })
+                                            .then(response => {
+                                                if (!response.ok) {
+                                                    throw new Error(`Erro HTTP: ${response.status}`);
+                                                }
+                                                return response.json();
+                                            })
+                                            .then(data => {
+                                                if (data.success) {
+                                                    const li = document.getElementById(`item-despesa-${itemId}`);
+                                                    if (li) li.remove();
+                                                } else {
+                                                    alert(data.error || 'Erro ao excluir item.');
+                                                }
+                                            })
+                                            .catch(error => {
+                                                console.error('Erro:', error);
+                                                alert(`Erro ao excluir item. Detalhes: ${error.message}`);
+                                            });
                                     }
                                 }
                             });

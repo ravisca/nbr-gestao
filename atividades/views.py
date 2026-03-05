@@ -5,8 +5,11 @@ from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db import transaction
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 
 from .models import RegistroAtividade, Projeto, TipoAtividade, Nucleo
+from financeiro.models import ItemDespesa
 from .forms import ProjetoForm, TipoAtividadeFormSet, NucleoFormSet, RegistroAtividadeForm, NaturezaDespesaFormSet
 
 # --- Permissões ---
@@ -93,6 +96,22 @@ class ProjetoUpdateView(LoginRequiredMixin, AdminRequiredMixin, UpdateView):
                 nucleos.save()
                 atividades.save()
                 naturezas.save()
+                
+                # Coleta alertas de itens duplicados ignorados
+                itens_ignorados_total = []
+                for nat_form in naturezas.forms:
+                    if hasattr(nat_form, 'nomes_ignorados_warning_buffer'):
+                        itens_ignorados_total.extend(nat_form.nomes_ignorados_warning_buffer)
+                
+                if itens_ignorados_total:
+                    from django.contrib import messages
+                    itens_str = ", ".join(itens_ignorados_total)
+                    if len(itens_ignorados_total) == 1:
+                        msg = f"O item rápido '{itens_str}' não foi criado pois já existia um item com este nome."
+                    else:
+                        msg = f"Os seguintes {len(itens_ignorados_total)} itens rápidos não foram criados pois já existiam com o mesmo nome: {itens_str}."
+                    messages.warning(self.request, msg)
+                    
             else:
                 return self.render_to_response(self.get_context_data(form=form))
         return super().form_valid(form)
@@ -154,3 +173,22 @@ def load_nucleos(request):
     else:
         nucleos = Nucleo.objects.none()
     return render(request, 'atividades/nucleo_dropdown_list_options.html', {'nucleos': nucleos})
+
+from django.views.decorators.csrf import csrf_exempt
+
+@csrf_exempt
+@login_required
+@require_POST
+def delete_item_despesa(request, item_id):
+    print(f"BATEU NA VIEW delete_item_despesa COM ID {item_id}")
+    try:
+        item = ItemDespesa.objects.get(id=item_id)
+        if not eh_admin(request.user):
+            print(f"USUARIO {request.user} NAO EH ADMIN!")
+            return JsonResponse({'success': False, 'error': 'Permissão negada'}, status=403)
+        item.delete()
+        print("ITEM EXCLUIDO COM SUCESSO!")
+        return JsonResponse({'success': True})
+    except ItemDespesa.DoesNotExist:
+        print(f"ITEM {item_id} NAO EXISTE NA BASE!")
+        return JsonResponse({'success': False, 'error': 'Item não encontrado'}, status=404)

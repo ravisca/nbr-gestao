@@ -43,21 +43,7 @@
                             {% endfor %}
                         </ul>
 
-                        <h6 class="mt-3 border-bottom pb-2">Naturezas de Despesa:</h6>
-                        {% for natureza in projeto.naturezadespesa_set.all %}
-                        <div class="mb-2">
-                            <strong>{{ natureza.codigo }} - {{ natureza.nome }}</strong>
-                            <ul class="list-unstyled ms-3 mb-0">
-                                {% for item in natureza.itens.all %}
-                                <li><small class="text-muted">{{ item.codigo }} - {{ item.nome }}</small></li>
-                                {% empty %}
-                                <li><small class="text-muted fst-italic">Sem itens cadastrados.</small></li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                        {% empty %}
-                        <p class="text-muted">Nenhuma natureza cadastrada.</p>
-                        {% endfor %}
+
                     </div>
                     <div class="card-footer bg-transparent border-0 text-end">
                         <a href="{% url 'projeto_update' projeto.pk %}" class="btn btn-sm btn-outline-secondary">
