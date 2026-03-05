@@ -220,6 +220,106 @@
                 }
             }
         });
+
+        // --- CASCATA DE DROPDOWNS (AJAX) ---
+        // Usamos jQuery (já presente no base.html) por conta do Select2,
+        // pois o Select2 não dispara eventos 'change' nativos que borbulham até o document da mesma forma.
+
+        $('body').on('change', 'select[name$="-projeto"]', function () {
+            const $this = $(this);
+            const projetoId = $this.val();
+            const $row = $this.closest('.vinculo-item');
+
+            const $nucleoSelect = $row.find('select[name$="-nucleo"]');
+            const $atividadeSelect = $row.find('select[name$="-atividade"]');
+
+            if (projetoId) {
+                // Carrega Núcleos
+                $.ajax({
+                    url: "{% url 'ajax_load_nucleos' %}",
+                    data: { 'projeto': projetoId },
+                    success: function (data) {
+                        $nucleoSelect.html(data);
+                        // Atualiza a interface do Select2 após mudar o HTML
+                        if ($nucleoSelect.hasClass("select2-hidden-accessible")) {
+                            $nucleoSelect.trigger('change.select2');
+                        }
+                    }
+                });
+                // Carrega Atividades
+                $.ajax({
+                    url: "{% url 'ajax_load_atividades' %}",
+                    data: { 'projeto': projetoId },
+                    success: function (data) {
+                        $atividadeSelect.html(data);
+                        if ($atividadeSelect.hasClass("select2-hidden-accessible")) {
+                            $atividadeSelect.trigger('change.select2');
+                        }
+                        // Limpa o turno já que a atividade mudou/recarregou
+                        const $turnoSelect = $row.find('select[name$="-turno"]');
+                        $turnoSelect.html('<option value="">---------</option>');
+                        if ($turnoSelect.hasClass("select2-hidden-accessible")) {
+                            $turnoSelect.trigger('change.select2');
+                        }
+                    }
+                });
+            } else {
+                $nucleoSelect.html('<option value="">---------</option>');
+                $atividadeSelect.html('<option value="">---------</option>');
+                if ($nucleoSelect.hasClass("select2-hidden-accessible")) $nucleoSelect.trigger('change.select2');
+                if ($atividadeSelect.hasClass("select2-hidden-accessible")) $atividadeSelect.trigger('change.select2');
+            }
+        });
+
+        $('body').on('change', 'select[name$="-atividade"]', function () {
+            const $this = $(this);
+            const atividadeId = $this.val();
+            const $row = $this.closest('.vinculo-item');
+
+            const $turnoSelect = $row.find('select[name$="-turno"]');
+
+            if (atividadeId) {
+                $.ajax({
+                    url: "{% url 'ajax_load_turnos' %}",
+                    data: { 'atividade': atividadeId },
+                    success: function (data) {
+                        $turnoSelect.html(data);
+                        if ($turnoSelect.hasClass("select2-hidden-accessible")) {
+                            $turnoSelect.trigger('change.select2');
+                        }
+                    }
+                });
+            } else {
+                $turnoSelect.html('<option value="">---------</option>');
+                if ($turnoSelect.hasClass("select2-hidden-accessible")) {
+                    $turnoSelect.trigger('change.select2');
+                }
+            }
+        });
+
+        // Corrige a inicialização do Select2 quando um novo vínculo é adicionado pelo Javascript 
+        // porque eles vêm como HTML puro e perdem os plugins
+        const observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+                if (mutation.addedNodes && mutation.addedNodes.length > 0) {
+                    mutation.addedNodes.forEach(function (node) {
+                        if (node.nodeType === 1 && $(node).hasClass('vinculo-item')) {
+                            $(node).find('select').select2({
+                                theme: 'bootstrap-5',
+                                width: '100%',
+                                language: {
+                                    noResults: function () { return "Nenhum resultado encontrado"; }
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
+        if (vinculosList) {
+            observer.observe(vinculosList, { childList: true });
+        }
     });
 </script>
 {% endblock %}

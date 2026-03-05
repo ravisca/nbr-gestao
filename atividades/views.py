@@ -153,15 +153,19 @@ def load_atividades(request):
 @login_required
 def load_turnos(request):
     atividade_id = request.GET.get('atividade')
+    print(f"[DEBUG] load_turnos invoked. atividade_id={atividade_id}")
     from beneficiarios.models import Turno  # Local import to avoid circular dependencies if any
     
     if atividade_id:
         try:
             atividade = TipoAtividade.objects.get(pk=atividade_id)
             turnos = atividade.turnos.all().order_by('nome')
+            print(f"[DEBUG] Found {turnos.count()} turnos for Atividade {atividade.nome}")
         except TipoAtividade.DoesNotExist:
+             print("[DEBUG] TipoAtividade.DoesNotExist")
              turnos = Turno.objects.none()
     else:
+        print("[DEBUG] No atividade_id provided")
         turnos = Turno.objects.none()
     return render(request, 'atividades/turno_dropdown_list_options.html', {'turnos': turnos})
 

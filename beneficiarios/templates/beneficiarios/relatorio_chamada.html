@@ -57,7 +57,8 @@
 <body>
     <div class="header">
         <img src="{% static 'img/logo.png' %}" class="logo">
-        <h2 style="margin: 0;">ONG SIGEP - Lista Completa de Beneficiários</h2>
+        <h2 style="margin: 0;">ONG SIGEP - {% if projeto_titulo %}{{ projeto_titulo }}{% else %}Lista Completa de
+            Beneficiários{% endif %}</h2>
         <p style="margin: 5px 0;">Gerado em: {{ data_geracao|date:"d/m/Y H:i" }} | Por: {{
             usuario.get_full_name|default:usuario.username }}</p>
     </div>
@@ -83,9 +84,21 @@
                 <td><b>{{ b.nome_completo|truncatechars:30 }}</b></td>
                 <td>{{ b.cpf }}</td>
                 <td style="text-align: center;">{{ b.idade }}</td>
-                <td>{{ b.projeto }}</td>
-                <td>{{ b.atividade }}</td>
-                <td>{{ b.turno }}</td>
+                <td>
+                    {% for v in b.vinculos.all %}
+                    {{ v.projeto.nome }}{% if not forloop.last %}<br>{% endif %}
+                    {% endfor %}
+                </td>
+                <td>
+                    {% for v in b.vinculos.all %}
+                    {{ v.atividade.nome }}{% if not forloop.last %}<br>{% endif %}
+                    {% endfor %}
+                </td>
+                <td>
+                    {% for v in b.vinculos.all %}
+                    {{ v.turno.nome }}{% if not forloop.last %}<br>{% endif %}
+                    {% endfor %}
+                </td>
                 <td>
                     {% if b.tem_problema_saude %}
                     <span style="color:red;">Sim</span>

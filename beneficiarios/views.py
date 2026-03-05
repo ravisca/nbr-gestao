@@ -22,6 +22,11 @@ class BeneficiarioListView(LoginRequiredMixin, ListView):
             queryset = queryset.filter(nome_completo__icontains=busca)
         return queryset.order_by('nome_completo')
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['projetos'] = Projeto.objects.filter(ativo=True).order_by('nome')
+        return context
+
 class BeneficiarioCreateView(LoginRequiredMixin, CreateView):
     model = Beneficiario
     form_class = BeneficiarioForm
@@ -92,20 +97,33 @@ class ListaChamadaPdfView(LoginRequiredMixin, View):
         
         return render_to_pdf('beneficiarios/relatorio_chamada.html', context)
 
-class RelatorioPorProjetoView(LoginRequiredMixin, ListView):
-    template_name = 'beneficiarios/relatorio_projeto.html'
-    context_object_name = 'beneficiarios'
+class RelatorioPorProjetoView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        projeto_id = request.GET.get('projeto')
+        if not projeto_id:
+            return render(request, 'core/error.html', {'message': 'Projeto não informado.'})
+            
+        projeto = Projeto.objects.filter(pk=projeto_id).first()
+        if not projeto:
+             return render(request, 'core/error.html', {'message': 'Projeto não encontrado.'})
 
-    def get_queryset(self):
-        projeto_id = self.request.GET.get('projeto')
-        if projeto_id:
-            return Beneficiario.objects.filter(
-                vinculos__projeto_id=projeto_id
-            ).distinct().prefetch_related('vinculos__projeto', 'vinculos__atividade', 'vinculos__turno').order_by('nome_completo')
-        return Beneficiario.objects.none()
+        from django.db.models import Prefetch
+        
+        vinculos_prefetch = Prefetch(
+            'vinculos',
+            queryset=VinculoBeneficiario.objects.filter(projeto_id=projeto_id).select_related('projeto', 'atividade', 'turno')
+        )
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['projetos'] = Projeto.objects.filter(ativo=True).order_by('nome')
-        context['projeto_selecionado'] = self.request.GET.get('projeto', '')
-        return context
+        beneficiarios = Beneficiario.objects.filter(
+            vinculos__projeto_id=projeto_id,
+            status='ATIVO'
+        ).distinct().prefetch_related(vinculos_prefetch).order_by('nome_completo')
+        
+        context = {
+            'beneficiarios': beneficiarios,
+            'projeto_titulo': projeto.nome,
+            'data_geracao': timezone.now(),
+            'usuario': request.user,
+        }
+        
+        return render_to_pdf('beneficiarios/relatorio_chamada.html', context)

@@ -7,9 +7,10 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2>Beneficiários</h2>
     <div>
-        <a href="{% url 'beneficiarios_relatorio_projeto' %}" class="btn btn-outline-info me-2">
+        <button type="button" class="btn btn-outline-info me-2" data-bs-toggle="modal"
+            data-bs-target="#modalRelatorioProjeto">
             <i class="bi bi-file-earmark-bar-graph"></i> Relatório por Projeto
-        </a>
+        </button>
         <a href="{% url 'beneficiarios_relatorio_chamada' %}" class="btn btn-outline-dark me-2" target="_blank">
             <i class="bi bi-printer"></i> Imprimir Lista
         </a>
@@ -96,4 +97,39 @@
         </table>
     </div>
 </div>
+
+<!-- Modal Relatório por Projeto -->
+<div class="modal fade" id="modalRelatorioProjeto" tabindex="-1" aria-labelledby="modalRelatorioProjetoLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalRelatorioProjetoLabel">Emitir Relatório por Projeto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Selecione um projeto para gerar a lista de presença em arquivo PDF.</p>
+                <form action="{% url 'beneficiarios_relatorio_projeto' %}" method="get" target="_blank"
+                    id="formRelatorioProjeto">
+                    <div class="mb-3">
+                        <label for="projeto-select" class="form-label">Projeto</label>
+                        <select name="projeto" id="projeto-select" class="form-select" required>
+                            <option value="">Selecione o Projeto...</option>
+                            {% for p in projetos %}
+                            <option value="{{ p.pk }}">{{ p.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" form="formRelatorioProjeto" class="btn btn-primary">
+                    <i class="bi bi-file-earmark-pdf"></i> Gerar PDF
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}

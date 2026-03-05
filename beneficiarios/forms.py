@@ -33,27 +33,43 @@ class VinculoForm(forms.ModelForm):
         # Cascata: Atividade → Turno
         self.fields['turno'].queryset = Turno.objects.none()
 
-        if 'projeto' in self.data:
-            prefix = self.prefix
-            try:
-                projeto_id = int(self.data.get(f'{prefix}-projeto'))
-                self.fields['nucleo'].queryset = Nucleo.objects.filter(projeto_id=projeto_id).order_by('nome')
-                self.fields['atividade'].queryset = TipoAtividade.objects.filter(projeto_id=projeto_id).order_by('nome')
-            except (ValueError, TypeError):
-                pass
-        elif self.instance.pk and self.instance.projeto_id:
-            self.fields['nucleo'].queryset = Nucleo.objects.filter(projeto=self.instance.projeto).order_by('nome')
-            self.fields['atividade'].queryset = TipoAtividade.objects.filter(projeto=self.instance.projeto).order_by('nome')
+        projeto_id = None
+        atividade_id = None
+        
+        # 1. Tenta recuperar valores iniciais da instância (quando editando um registro existente)
+        if self.instance.pk:
+            if self.instance.projeto_id:
+                projeto_id = self.instance.projeto_id
+            if self.instance.atividade_id:
+                atividade_id = self.instance.atividade_id
 
-        if 'atividade' in self.data:
-            prefix = self.prefix
-            try:
-                atividade_id = int(self.data.get(f'{prefix}-atividade'))
-                self.fields['turno'].queryset = Turno.objects.filter(tipoatividade__id=atividade_id).order_by('nome')
-            except (ValueError, TypeError):
-                pass
-        elif self.instance.pk and self.instance.atividade_id:
-            self.fields['turno'].queryset = self.instance.atividade.turnos.order_by('nome')
+        # 2. Sobrescreve pelos valores do POST (self.data) se existirem. 
+        # Como é formset, a chave exata depende do prefix (ex: vinculos-0-projeto)
+        if self.data:
+            prefix = self.prefix if self.prefix else ''
+            # Tenta pegar a chave com e sem prefixo, ou procura por chaves terminadas no campo correto
+            p_key = f'{prefix}-projeto'
+            a_key = f'{prefix}-atividade'
+            
+            if p_key in self.data and self.data[p_key]:
+                try:
+                    projeto_id = int(self.data[p_key])
+                except (ValueError, TypeError):
+                    pass
+                    
+            if a_key in self.data and self.data[a_key]:
+                try:
+                    atividade_id = int(self.data[a_key])
+                except (ValueError, TypeError):
+                    pass
+
+        # 3. Aplica os filtros permitindo apenas opções daquele projeto/atividade
+        if projeto_id:
+            self.fields['nucleo'].queryset = Nucleo.objects.filter(projeto_id=projeto_id).order_by('nome')
+            self.fields['atividade'].queryset = TipoAtividade.objects.filter(projeto_id=projeto_id).order_by('nome')
+            
+        if atividade_id:
+            self.fields['turno'].queryset = Turno.objects.filter(tipoatividade__id=atividade_id).order_by('nome')
 
 
 VinculoFormSet = inlineformset_factory(
