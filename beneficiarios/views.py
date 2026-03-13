@@ -17,14 +17,44 @@ class BeneficiarioListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         queryset = super().get_queryset().prefetch_related('vinculos__projeto', 'vinculos__turno')
+        
+        status = self.request.GET.get('status')
+        if status:
+            queryset = queryset.filter(status=status)
+            
+        projeto = self.request.GET.get('projeto')
+        if projeto:
+            queryset = queryset.filter(vinculos__projeto_id=projeto).distinct()
+            
         busca = self.request.GET.get('busca')
         if busca:
-            queryset = queryset.filter(nome_completo__icontains=busca)
+            from django.db.models import Q
+            queryset = queryset.filter(
+                Q(nome_completo__icontains=busca) |
+                Q(cpf__icontains=busca) |
+                Q(telefone__icontains=busca)
+            )
+            
         return queryset.order_by('nome_completo')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['projetos'] = Projeto.objects.filter(ativo=True).order_by('nome')
+        
+        status_selecionado = self.request.GET.get('status', '')
+        context['status_ativo_flag'] = 'selected' if status_selecionado == 'ATIVO' else ''
+        context['status_inativo_flag'] = 'selected' if status_selecionado == 'INATIVO' else ''
+        
+        projeto_id_str = self.request.GET.get('projeto', '')
+        try:
+            projeto_selecionado_int = int(projeto_id_str)
+        except ValueError:
+            projeto_selecionado_int = None
+            
+        projetos = list(Projeto.objects.filter(ativo=True).order_by('nome'))
+        for p in projetos:
+            p.selected_flag = 'selected' if p.pk == projeto_selecionado_int else ''
+            
+        context['projetos'] = projetos
         return context
 
 class BeneficiarioCreateView(LoginRequiredMixin, CreateView):
@@ -87,7 +117,28 @@ class BeneficiarioDetailView(LoginRequiredMixin, DetailView):
 
 class ListaChamadaPdfView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
-        beneficiarios = Beneficiario.objects.filter(status='ATIVO').order_by('nome_completo')
+        beneficiarios = Beneficiario.objects.all()
+        
+        status = request.GET.get('status')
+        if status:
+            beneficiarios = beneficiarios.filter(status=status)
+        else:
+            beneficiarios = beneficiarios.filter(status='ATIVO')
+            
+        projeto = request.GET.get('projeto')
+        if projeto:
+            beneficiarios = beneficiarios.filter(vinculos__projeto_id=projeto).distinct()
+            
+        busca = request.GET.get('busca')
+        if busca:
+            from django.db.models import Q
+            beneficiarios = beneficiarios.filter(
+                Q(nome_completo__icontains=busca) |
+                Q(cpf__icontains=busca) |
+                Q(telefone__icontains=busca)
+            )
+            
+        beneficiarios = beneficiarios.order_by('nome_completo')
         
         context = {
             'beneficiarios': beneficiarios,
