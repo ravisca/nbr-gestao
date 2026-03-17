@@ -19,8 +19,7 @@
                             <strong>Item:</strong> {{ emprestimo.item.nome }}
                         </div>
                         <div class="col-md-4">
-                            <strong>Qtd Emprestada:</strong> <span class="badge bg-primary fs-6">{{
-                                emprestimo.quantidade_emprestada }}</span>
+                            <strong>Qtd Emprestada:</strong> <span class="badge bg-primary fs-6">{{ emprestimo.quantidade_emprestada }}</span>
                         </div>
                         <div class="col-md-4">
                             <strong>Solicitante:</strong> {{ emprestimo.nome_solicitante }}
@@ -75,8 +74,7 @@
     document.addEventListener('DOMContentLoaded', function () {
         const qtdDevolvida = document.getElementById('id_quantidade_devolvida');
         const motivoSection = document.getElementById('motivo-section');
-        const qtdEmprestada = {{ emprestimo.quantidade_emprestada }
-    };
+        const qtdEmprestada = {{ emprestimo.quantidade_emprestada }};
 
     function checkMotivo() {
         const val = parseInt(qtdDevolvida.value) || 0;

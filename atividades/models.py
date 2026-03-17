@@ -6,6 +6,7 @@ class Projeto(models.Model):
     nome = models.CharField(max_length=100, verbose_name="Nome do Projeto")
     descricao = models.TextField(verbose_name="Descrição", blank=True, null=True)
     cor = models.CharField(max_length=7, default="#FFFFFF", verbose_name="Cor de Identificação", help_text="Cor em Hexadecimal (ex: #FF0000)")
+    valor_inicial = models.DecimalField(max_digits=12, decimal_places=2, default=0, verbose_name="Valor Inicial do Projeto")
     ativo = models.BooleanField(default=True)
 
     def __str__(self):

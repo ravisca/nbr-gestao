@@ -112,8 +112,7 @@
             <tr>
                 <td>{{ m.data|date:"d/m/Y" }}</td>
                 <td>{{ m.item.nome }}</td>
-                <td class="text-right"><span class="badge-success">+ {{ m.quantidade }}</span> {{ m.item.unidade.sigla
-                    }}</td>
+                <td class="text-right"><span class="badge-success">+ {{ m.quantidade }}</span> {{ m.item.unidade.sigla }}</td>
                 <td>{{ m.origem_destino|default:"-" }}</td>
             </tr>
             {% empty %}
@@ -168,8 +167,7 @@
             <tr>
                 <td>{{ e.data_saida|date:"d/m/Y" }}</td>
                 <td>{{ e.item.nome }}</td>
-                <td class="text-right"><span class="badge-danger">- {{ e.quantidade_emprestada }}</span> {{
-                    e.item.unidade.sigla }}</td>
+                <td class="text-right"><span class="badge-danger">- {{ e.quantidade_emprestada }}</span> {{ e.item.unidade.sigla }}</td>
                 <td>{{ e.nome_solicitante }}</td>
             </tr>
             {% empty %}
@@ -196,8 +194,7 @@
             <tr>
                 <td>{{ e.data_devolucao|date:"d/m/Y" }}</td>
                 <td>{{ e.item.nome }}</td>
-                <td class="text-right"><span class="badge-success">+ {{ e.quantidade_devolvida }}</span> {{
-                    e.item.unidade.sigla }}</td>
+                <td class="text-right"><span class="badge-success">+ {{ e.quantidade_devolvida }}</span> {{ e.item.unidade.sigla }}</td>
                 <td>{{ e.nome_solicitante }} {% if e.motivo_falta %}(Obs: {{ e.motivo_falta }}){% endif %}</td>
             </tr>
             {% empty %}

@@ -12,9 +12,6 @@
         <a href="{% url 'estoque_emprestimo_interno' %}" class="btn btn-info me-1">
             <i class="bi bi-building"></i> Empréstimo Interno
         </a>
-        <a href="{% url 'estoque_relatorio_emprestimos' %}" class="btn btn-outline-dark me-1">
-            <i class="bi bi-file-earmark-bar-graph"></i> Relatório
-        </a>
         <a href="{% url 'estoque_list' %}" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left"></i> Voltar
         </a>
@@ -106,9 +103,11 @@
                         {% endif %}
                     </td>
                     <td class="text-end">
+                        <a href="{% url 'estoque_recibo_emprestimo' e.grupo_lote|default:e.pk %}" class="btn btn-sm btn-outline-dark" target="_blank" title="Imprimir Comprovante">
+                            <i class="bi bi-printer"></i>
+                        </a>
                         {% if not e.devolvido %}
-                        <a href="{% url 'estoque_emprestimo_devolucao' e.pk %}" class="btn btn-sm btn-outline-success"
-                            title="Registrar Devolução">
+                        <a href="{% url 'estoque_emprestimo_devolucao' e.pk %}" class="btn btn-sm btn-outline-success" title="Registrar Devolução">
                             <i class="bi bi-box-arrow-in-down"></i>
                         </a>
                         {% endif %}

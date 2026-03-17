@@ -10,7 +10,7 @@ from django.utils import timezone
 from django.db import transaction
 
 from .models import Item, Movimentacao, Emprestimo, Categoria, UnidadeMedida
-from .forms import ItemForm, EmprestimoExternoForm, EmprestimoInternoForm, DevolucaoForm, MovimentacaoSaidaItemForm, SaidaOptionsForm
+from .forms import ItemForm, DevolucaoForm
 from core.utils import render_to_pdf
 
 
@@ -50,35 +50,100 @@ class ItemUpdateView(LoginRequiredMixin, UpdateView):
         return context
 
 
+# === LOTE VIEW BASE ===
+import uuid
+from django.forms import formset_factory
+
+class GenericLoteCreateView(LoginRequiredMixin, View):
+    header_form_class = None
+    item_form_class = None
+    template_name = 'estoque/movimentacao_lote_form.html'
+    titulo = "Movimentação em Lote"
+    success_url = reverse_lazy('estoque_list')
+
+    def processar_lote(self, header_form, formset, grupo_lote):
+        raise NotImplementedError("Subclasses devem implementar processar_lote")
+
+    def get(self, request):
+        ItemFormSet = formset_factory(self.item_form_class, extra=1)
+        header_form = self.header_form_class()
+        formset = ItemFormSet(prefix='itens')
+        return render(request, self.template_name, {
+            'header_form': header_form,
+            'formset': formset,
+            'titulo': self.titulo
+        })
+
+    def post(self, request):
+        ItemFormSet = formset_factory(self.item_form_class)
+        header_form = self.header_form_class(request.POST)
+        formset = ItemFormSet(request.POST, prefix='itens')
+
+        if header_form.is_valid() and formset.is_valid():
+            grupo_lote = str(uuid.uuid4().hex)[:10].upper()
+            with transaction.atomic():
+                self.processar_lote(header_form, formset, grupo_lote)
+            
+            tipo = 'EMPRESTIMO' if 'Empréstimo' in self.titulo else 'MOVIMENTACAO'
+            
+            return render(request, 'estoque/lote_sucesso.html', {
+                'grupo_lote': grupo_lote,
+                'tipo': tipo,
+                'url_voltar': self.success_url
+            })
+
+        return render(request, self.template_name, {
+            'header_form': header_form,
+            'formset': formset,
+            'titulo': self.titulo
+        })
+
+
 # === MOVIMENTAÇÕES ===
 
-class MovimentacaoEntradaView(LoginRequiredMixin, CreateView):
-    model = Movimentacao
-    template_name = 'estoque/movimentacao_form.html'
-    fields = ['item', 'quantidade', 'origem_destino', 'observacao']
-    success_url = reverse_lazy('estoque_list')
-    def form_valid(self, form):
-        form.instance.tipo = 'ENTRADA'
-        form.instance.usuario = self.request.user
-        return super().form_valid(form)
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['titulo'] = 'Nova Entrada (Doação/Compra)'
-        return context
+from .forms import MovimentacaoHeaderForm, MovimentacaoEntradaItemForm, MovimentacaoSaidaItemForm
 
-class MovimentacaoSaidaView(LoginRequiredMixin, CreateView):
-    model = Movimentacao
-    template_name = 'estoque/movimentacao_form.html'
-    fields = ['item', 'quantidade', 'origem_destino', 'observacao']
-    success_url = reverse_lazy('estoque_list')
-    def form_valid(self, form):
-        form.instance.tipo = 'SAIDA'
-        form.instance.usuario = self.request.user
-        return super().form_valid(form)
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['titulo'] = 'Nova Saída (Uso/Consumo)'
-        return context
+class MovimentacaoEntradaView(GenericLoteCreateView):
+    header_form_class = MovimentacaoHeaderForm
+    item_form_class = MovimentacaoEntradaItemForm
+    titulo = 'Nova Entrada Lote (Doação/Compra)'
+
+    def processar_lote(self, header_form, formset, grupo_lote):
+        origem = header_form.cleaned_data.get('origem_destino')
+        observacao = header_form.cleaned_data.get('observacao')
+        
+        for f in formset:
+            if f.cleaned_data:
+                Movimentacao.objects.create(
+                    item=f.cleaned_data['item'],
+                    tipo='ENTRADA',
+                    quantidade=f.cleaned_data['quantidade'],
+                    usuario=self.request.user,
+                    origem_destino=origem,
+                    observacao=observacao,
+                    grupo_lote=grupo_lote
+                )
+
+class MovimentacaoSaidaView(GenericLoteCreateView):
+    header_form_class = MovimentacaoHeaderForm
+    item_form_class = MovimentacaoSaidaItemForm
+    titulo = 'Nova Saída Lote (Uso/Consumo)'
+
+    def processar_lote(self, header_form, formset, grupo_lote):
+        destino = header_form.cleaned_data.get('origem_destino')
+        observacao = header_form.cleaned_data.get('observacao')
+        
+        for f in formset:
+            if f.cleaned_data:
+                Movimentacao.objects.create(
+                    item=f.cleaned_data['item'],
+                    tipo='SAIDA',
+                    quantidade=f.cleaned_data['quantidade'],
+                    usuario=self.request.user,
+                    origem_destino=destino,
+                    observacao=observacao,
+                    grupo_lote=grupo_lote
+                )
 
 
 # === EMPRÉSTIMOS ===
@@ -101,37 +166,41 @@ class EmprestimoListView(LoginRequiredMixin, ListView):
             queryset = queryset.filter(tipo=tipo)
         return queryset
 
-class EmprestimoExternoCreateView(LoginRequiredMixin, CreateView):
-    model = Emprestimo
-    form_class = EmprestimoExternoForm
-    template_name = 'estoque/emprestimo_form.html'
+from .forms import EmprestimoExternoHeaderForm, EmprestimoInternoHeaderForm, EmprestimoItemForm
+
+class EmprestimoExternoCreateView(GenericLoteCreateView):
+    header_form_class = EmprestimoExternoHeaderForm
+    item_form_class = EmprestimoItemForm
+    titulo = 'Novo Empréstimo Externo (Lote)'
     success_url = reverse_lazy('estoque_emprestimo_list')
 
-    def form_valid(self, form):
-        form.instance.tipo = 'EXTERNO'
-        return super().form_valid(form)
+    def processar_lote(self, header_form, formset, grupo_lote):
+        for f in formset:
+            if f.cleaned_data:
+                emp = header_form.save(commit=False)
+                emp.pk = None # force new object for each item
+                emp.tipo = 'EXTERNO'
+                emp.grupo_lote = grupo_lote
+                emp.item = f.cleaned_data['item']
+                emp.quantidade_emprestada = f.cleaned_data['quantidade']
+                emp.save()
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['titulo'] = 'Novo Empréstimo Externo'
-        context['tipo_emprestimo'] = 'EXTERNO'
-        return context
-
-class EmprestimoInternoCreateView(LoginRequiredMixin, CreateView):
-    model = Emprestimo
-    form_class = EmprestimoInternoForm
-    template_name = 'estoque/emprestimo_form.html'
+class EmprestimoInternoCreateView(GenericLoteCreateView):
+    header_form_class = EmprestimoInternoHeaderForm
+    item_form_class = EmprestimoItemForm
+    titulo = 'Novo Empréstimo Interno / Operação (Lote)'
     success_url = reverse_lazy('estoque_emprestimo_list')
 
-    def form_valid(self, form):
-        form.instance.tipo = 'INTERNO'
-        return super().form_valid(form)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['titulo'] = 'Novo Empréstimo Interno / Operação'
-        context['tipo_emprestimo'] = 'INTERNO'
-        return context
+    def processar_lote(self, header_form, formset, grupo_lote):
+        for f in formset:
+            if f.cleaned_data:
+                emp = header_form.save(commit=False)
+                emp.pk = None # force new object
+                emp.tipo = 'INTERNO'
+                emp.grupo_lote = grupo_lote
+                emp.item = f.cleaned_data['item']
+                emp.quantidade_emprestada = f.cleaned_data['quantidade']
+                emp.save()
 
 class EmprestimoDevolucaoView(LoginRequiredMixin, UpdateView):
     model = Emprestimo
@@ -223,57 +292,54 @@ class UnidadeCreatePopup(GenericPopupCreateView):
     title = "Nova Unidade de Medida"
 
 
-class MovimentacaoSaidaLoteView(LoginRequiredMixin, View):
-    template_name = 'estoque/movimentacao_saida_lote.html'
+class ReciboMovimentacaoPdfView(LoginRequiredMixin, View):
+    def get(self, request, grupo_lote):
+        movimentacoes = Movimentacao.objects.filter(grupo_lote=grupo_lote)
+        if not movimentacoes.exists():
+            return HttpResponse("Recibo não encontrado ou lote inválido.")
+        
+        primeira = movimentacoes.first()
+        context = {
+            'is_emprestimo': False,
+            'itens': movimentacoes,
+            'data': primeira.data,
+            'origem_destino': primeira.origem_destino,
+            'observacao': primeira.observacao,
+            'tipo': primeira.get_tipo_display(),
+            'grupo_lote': grupo_lote,
+            'data_geracao': timezone.now(),
+            'usuario': primeira.usuario,
+            'titulo': f"Comprovante de {primeira.get_tipo_display()}"
+        }
+        return render_to_pdf('estoque/recibo_pdf.html', context)
 
-    def get(self, request):
-        MovimentacaoFormSet = formset_factory(MovimentacaoSaidaItemForm, extra=1)
-        formset = MovimentacaoFormSet()
-        options_form = SaidaOptionsForm()
-        return render(request, self.template_name, {
-            'formset': formset,
-            'options_form': options_form,
-            'titulo': 'Saída em Lote / Empréstimo Interno'
-        })
+class ReciboEmprestimoPdfView(LoginRequiredMixin, View):
+    def get(self, request, grupo_lote):
+        emprestimos = Emprestimo.objects.filter(grupo_lote=grupo_lote)
+        if not emprestimos.exists():
+            return HttpResponse("Recibo de empréstimo não encontrado ou lote inválido.")
 
-    def post(self, request):
-        MovimentacaoFormSet = formset_factory(MovimentacaoSaidaItemForm)
-        formset = MovimentacaoFormSet(request.POST)
-        options_form = SaidaOptionsForm(request.POST)
-
-        if formset.is_valid() and options_form.is_valid():
-            is_emprestimo = options_form.cleaned_data.get('is_emprestimo')
-            nome_solicitante = options_form.cleaned_data.get('nome_solicitante')
-            contato = options_form.cleaned_data.get('contato')
-            data_prevista = options_form.cleaned_data.get('data_prevista')
-
-            for form in formset:
-                if form.cleaned_data:
-                    item = form.cleaned_data['item']
-                    quantidade = form.cleaned_data['quantidade']
-
-                    if is_emprestimo:
-                        Emprestimo.objects.create(
-                            item=item,
-                            quantidade_emprestada=int(quantidade),
-                            nome_solicitante=nome_solicitante,
-                            contato=contato,
-                            data_prevista=data_prevista,
-                            tipo='INTERNO',
-                            observacoes="Criado via Saída em Lote"
-                        )
-                    else:
-                        Movimentacao.objects.create(
-                            item=item,
-                            tipo='SAIDA',
-                            quantidade=quantidade,
-                            usuario=request.user,
-                            observacao="Saída em Lote"
-                        )
-            return redirect('estoque_list')
-
-        return render(request, self.template_name, {
-            'formset': formset,
-            'options_form': options_form,
-            'titulo': 'Saída em Lote / Empréstimo Interno'
-        })
+        primeiro = emprestimos.first()
+        context = {
+            'is_emprestimo': True,
+            'itens': emprestimos,
+            'data': primeiro.data_saida,
+            'data_real': primeiro.data_saida_real,
+            'solicitante': primeiro.nome_solicitante,
+            'cpf': primeiro.cpf_solicitante,
+            'email': primeiro.email_solicitante,
+            'endereco': primeiro.endereco,
+            'responsavel_casa': primeiro.responsavel_casa,
+            'logistica': primeiro.logistica,
+            'contato': primeiro.contato,
+            'previsao': primeiro.data_prevista,
+            'projeto': primeiro.projeto,
+            'nucleo': primeiro.nucleo,
+            'observacao': primeiro.observacoes,
+            'tipo': primeiro.get_tipo_display(),
+            'grupo_lote': grupo_lote,
+            'data_geracao': timezone.now(),
+            'usuario': request.user,
+            'titulo': f"Comprovante de Empréstimo ({primeiro.get_tipo_display()})"
+        }
+        return render_to_pdf('estoque/recibo_pdf.html', context)

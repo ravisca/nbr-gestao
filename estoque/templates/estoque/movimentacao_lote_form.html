@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ titulo }} | SIGEP{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-primary text-white py-3">
+                <h4 class="mb-0">{{ titulo }}</h4>
+            </div>
+            
+            <form method="post">
+                {% csrf_token %}
+                <div class="card-body">
+                    <!-- HEADER FORM -->
+                    <h5 class="text-secondary border-bottom pb-2 mb-3">Detalhes Gerais</h5>
+                    <div class="row header-form-container">
+                        {% for field in header_form %}
+                            <div class="col-md-6 mb-3">
+                                {{ field|as_crispy_field }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- FORMSET DE ITENS -->
+                    <h5 class="text-secondary border-bottom pb-2 mt-4 mb-3">Itens e Quantidades</h5>
+                    
+                    {{ formset.management_form }}
+                    <div id="formset-container">
+                        {% for item_form in formset %}
+                            <div class="row formset-row align-items-center mb-2 bg-light p-2 rounded border">
+                                {% for field in item_form %}
+                                    <div class="col-md-5">
+                                        {{ field|as_crispy_field }}
+                                    </div>
+                                {% endfor %}
+                                <div class="col-md-2 text-center pt-3">
+                                    <button type="button" class="btn btn-outline-danger btn-sm remove-row-btn"><i class="bi bi-trash"></i></button>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <button type="button" id="add-row-btn" class="btn btn-sm btn-outline-primary mt-2">
+                        <i class="bi bi-plus-circle"></i> Adicionar Mais um Item
+                    </button>
+                    
+                    <!-- EMPTY FORM TEMPLATE (Hidden) -->
+                    <div id="empty-form-template" style="display: none;">
+                        <div class="row formset-row align-items-center mb-2 bg-light p-2 rounded border">
+                            {% for field in formset.empty_form %}
+                                <div class="col-md-5">
+                                    {{ field|as_crispy_field }}
+                                </div>
+                            {% endfor %}
+                            <div class="col-md-2 text-center pt-3">
+                                <button type="button" class="btn btn-outline-danger btn-sm remove-row-btn"><i class="bi bi-trash"></i></button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="card-footer bg-white text-end py-3">
+                    <a href="javascript:history.back()" class="btn btn-outline-secondary me-2">Cancelar</a>
+                    <button type="submit" class="btn btn-success"><i class="bi bi-check-lg"></i> Salvar Registros</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('formset-container');
+    const addButton = document.getElementById('add-row-btn');
+    const emptyFormTemplate = document.getElementById('empty-form-template').innerHTML;
+    const totalFormsInput = document.getElementById('id_itens-TOTAL_FORMS');
+    
+    // Função para atualizar os IDs do Select2 se a classe for select2-item
+    function initializeSelect2(row) {
+        if(typeof jQuery !== 'undefined' && typeof jQuery.fn.select2 !== 'undefined') {
+            const selects = row.querySelectorAll('.select2-item');
+            selects.forEach(select => {
+                // If the element has select2 initialized, destroy and recreate
+                if(jQuery(select).hasClass("select2-hidden-accessible")){
+                     jQuery(select).select2('destroy');
+                }
+                const $select = jQuery(select);
+                $select.select2({theme: 'bootstrap-5', width: '100%'});
+            });
+        }
+    }
+
+    // Inicializa o select2 na primeira linha carregada
+    initializeSelect2(document);
+
+    // Remove row
+    container.addEventListener('click', function(e) {
+        const btn = e.target.closest('.remove-row-btn');
+        if (btn) {
+            const row = btn.closest('.formset-row');
+            // Impede remover a última linha existente se for a única visível (opcional, aqui permitimos apagar mas tem que ter ao menos 1 no post)
+            if (container.querySelectorAll('.formset-row').length > 1) {
+                row.remove();
+                updateFormIndices();
+            } else {
+                alert('Você precisa de pelo menos 1 item na lista.');
+            }
+        }
+    });
+
+    addButton.addEventListener('click', function() {
+        // Quantos forms existem atualmente
+        const formCount = parseInt(totalFormsInput.value);
+        
+        // Substituir o prefix __prefix__ pelo índice atual
+        const newFormHtml = emptyFormTemplate.replace(/__prefix__/g, formCount);
+        
+        // Inserir no container
+        container.insertAdjacentHTML('beforeend', newFormHtml);
+        
+        // Atualiza a flag
+        totalFormsInput.value = formCount + 1;
+
+        // Inicializar o select2 na nova linha
+        const newRow = container.lastElementChild;
+        initializeSelect2(newRow);
+    });
+
+    function updateFormIndices() {
+        const rows = container.querySelectorAll('.formset-row');
+        rows.forEach((row, index) => {
+            const inputs = row.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                if (input.name) input.name = input.name.replace(/itens-\d+-/g, `itens-${index}-`);
+                if (input.id) input.id = input.id.replace(/id_itens-\d+-/g, `id_itens-${index}-`);
+            });
+        });
+        totalFormsInput.value = rows.length;
+    }
+});
+</script>
+{% endblock %}

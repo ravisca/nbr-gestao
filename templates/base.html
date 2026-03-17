@@ -248,7 +248,7 @@
             </ul>
 
             <a href="{% url 'registrar_atividade_mobile' %}"
-                class="nav-link {% if 'atividades' in request.path %}active{% endif %}">
+                class="nav-link {% if 'atividades/registrar' in request.path or request.resolver_match.url_name == 'registrar_atividade_mobile' %}active{% endif %}">
                 <i class="bi bi-phone"></i> Atividades (Mobile)
             </a>
         </div>

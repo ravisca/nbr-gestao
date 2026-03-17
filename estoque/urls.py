@@ -8,7 +8,6 @@ urlpatterns = [
 
     path('movimentacao/entrada/', views.MovimentacaoEntradaView.as_view(), name='estoque_entrada'),
     path('movimentacao/saida/', views.MovimentacaoSaidaView.as_view(), name='estoque_saida'),
-    path('movimentacao/saida/lote/', views.MovimentacaoSaidaLoteView.as_view(), name='estoque_saida_lote'),
 
     # Empréstimos
     path('emprestimos/', views.EmprestimoListView.as_view(), name='estoque_emprestimo_list'),
@@ -16,9 +15,11 @@ urlpatterns = [
     path('emprestimos/interno/novo/', views.EmprestimoInternoCreateView.as_view(), name='estoque_emprestimo_interno'),
     path('emprestimos/devolucao/<int:pk>/', views.EmprestimoDevolucaoView.as_view(), name='estoque_emprestimo_devolucao'),
 
-    # Relatórios
+    # Relatórios e Recibos
     path('relatorio/', views.RelatorioEstoquePdfView.as_view(), name='estoque_relatorio_movimentacao'),
     path('relatorio/emprestimos/', views.RelatorioEmprestimoView.as_view(), name='estoque_relatorio_emprestimos'),
+    path('recibo/movimentacao/<str:grupo_lote>/', views.ReciboMovimentacaoPdfView.as_view(), name='estoque_recibo_movimentacao'),
+    path('recibo/emprestimo/<str:grupo_lote>/', views.ReciboEmprestimoPdfView.as_view(), name='estoque_recibo_emprestimo'),
 
     # AJAX / Quick Add
     path('ajax/categoria/nova/', views.CategoriaCreatePopup.as_view(), name='estoque_categoria_create_ajax'),

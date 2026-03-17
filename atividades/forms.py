@@ -6,10 +6,11 @@ from financeiro.models import NaturezaDespesa, ItemDespesa
 class ProjetoForm(forms.ModelForm):
     class Meta:
         model = Projeto
-        fields = ['nome', 'cor', 'descricao', 'ativo']
+        fields = ['nome', 'cor', 'descricao', 'valor_inicial', 'ativo']
         widgets = {
             'descricao': forms.Textarea(attrs={'rows': 3}),
             'cor': forms.TextInput(attrs={'type': 'color', 'class': 'form-control form-control-color', 'title': 'Escolha a cor do projeto'}),
+            'valor_inicial': forms.NumberInput(attrs={'step': '0.01', 'min': '0'}),
         }
 
 # --- NÚCLEOS ---

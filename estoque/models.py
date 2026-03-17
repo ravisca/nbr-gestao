@@ -38,6 +38,7 @@ class Movimentacao(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name="Responsável")
     origem_destino = models.CharField(max_length=200, blank=True, null=True, verbose_name="Origem / Destino")
     observacao = models.TextField(blank=True, null=True, verbose_name="Observações")
+    grupo_lote = models.CharField(max_length=50, blank=True, null=True, db_index=True, verbose_name="Código do Lote")
 
     def __str__(self): return f"{self.get_tipo_display()} - {self.item.nome}"
     class Meta: verbose_name = "Movimentação"; verbose_name_plural = "Movimentações"; ordering = ['-data', '-id']
@@ -91,6 +92,7 @@ class Emprestimo(models.Model):
     quantidade_devolvida = models.PositiveIntegerField(blank=True, null=True, verbose_name="Qtd. Devolvida")
     motivo_falta = models.TextField(blank=True, null=True, verbose_name="Motivo da Diferença (Perda/Quebra)")
     observacoes = models.TextField(blank=True, null=True, verbose_name="Observações Gerais")
+    grupo_lote = models.CharField(max_length=50, blank=True, null=True, db_index=True, verbose_name="Código do Lote")
 
     devolvido = models.BooleanField(default=False, editable=False)
 
@@ -112,8 +114,9 @@ class Emprestimo(models.Model):
 
     def clean(self):
         if not self.pk and not self.devolvido:
-            if self.item.quantidade_atual < self.quantidade_emprestada:
-                raise ValidationError(f"Estoque insuficiente! Você quer {self.quantidade_emprestada}, mas só tem {self.item.quantidade_atual}.")
+            if hasattr(self, 'item') and self.item:
+                if self.item.quantidade_atual < self.quantidade_emprestada:
+                    raise ValidationError(f"Estoque insuficiente! Você quer {self.quantidade_emprestada}, mas só tem {self.item.quantidade_atual}.")
 
         if self.quantidade_devolvida is not None:
             if self.quantidade_devolvida > self.quantidade_emprestada:

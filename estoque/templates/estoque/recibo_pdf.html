@@ -1,0 +1,228 @@
+<!DOCTYPE HTML>
+{% load static %}
+<html lang="pt-br">
+
+<head>
+    <meta charset="utf-8">
+    <title>{{ titulo }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm 1cm 2cm 1cm;
+            @frame footer {
+                -pdf-frame-content: footer_content;
+                bottom: 1cm;
+                margin-left: 1cm;
+                margin-right: 1cm;
+                height: 1cm;
+            }
+        }
+
+        body {
+            font-family: Helvetica, sans-serif;
+            font-size: 10pt;
+            color: #333;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            position: relative;
+        }
+
+        .header-content {
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .logo {
+            width: 130px;
+            vertical-align: middle;
+            margin-right: 20px;
+        }
+
+        .title-text {
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .info-box {
+            padding: 10px 0;
+            margin-bottom: 20px;
+        }
+
+        .info-box p {
+            margin: 5px 0;
+        }
+
+        .section-title {
+            background-color: transparent;
+            padding: 5px 0;
+            font-weight: bold;
+            font-size: 11pt;
+            margin-top: 25px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+
+        th, td {
+            border: none;
+            border-bottom: 1px solid #eee;
+            padding: 10px 5px;
+            text-align: left;
+        }
+
+        th {
+            background-color: transparent;
+            font-weight: bold;
+            color: #555;
+            border-bottom: 2px solid #ccc;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .observacao-box {
+            margin-top: 20px;
+            padding: 10px;
+            color: #444;
+            font-style: italic;
+        }
+
+        .signatures {
+            margin-top: 80px;
+            width: 100%;
+        }
+
+        .sig-line {
+            width: 45%;
+            border-top: 1px solid #000;
+            padding-top: 5px;
+            text-align: center;
+            display: inline-block;
+            font-size: 9pt;
+        }
+        
+        #footer_content {
+            font-size: 8pt;
+            color: #999;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="footer_content">
+        {% if grupo_lote %}Lote ID: {{ grupo_lote }} &nbsp;|&nbsp; {% endif %}Data emissão: {{ data_geracao|date:"d/m/Y H:i" }}
+    </div>
+
+    <div class="header">
+        <div class="header-content">
+            <img src="{% static 'img/logo.png' %}" class="logo">
+            <div class="title-text">
+                <h2 style="margin: 0; font-size: 16pt;">ONG NBR - SIGEP</h2>
+                <p style="margin: 5px 0 0; font-size: 12pt; color: #555;">{{ titulo }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- CABEÇALHO COMUM -->
+    <div class="info-box">
+        {% if is_emprestimo %}
+            <p><strong>Operação:</strong> Empréstimo {{ tipo }}</p>
+            <p><strong>Data de Retirada:</strong> {{ data|date:"d/m/Y" }} 
+               {% if data_real %}&nbsp;&nbsp;|&nbsp;&nbsp; <strong>Saída Efetiva:</strong> {{ data_real|date:"d/m/Y" }}{% endif %}
+               &nbsp;&nbsp;|&nbsp;&nbsp; <strong>Previsão de Devolução:</strong> {{ previsao|date:"d/m/Y" }}</p>
+            <p><strong>Solicitante Responsável:</strong> {{ solicitante }} {% if cpf %}(CPF: {{ cpf }}){% endif %}</p>
+            
+            {% if contato or email %}
+            <p><strong>Contato:</strong> {{ contato|default:"-" }} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>E-mail:</strong> {{ email|default:"-" }}</p>
+            {% endif %}
+            
+            {% if endereco %}
+            <p><strong>Endereço Destino:</strong> {{ endereco }}</p>
+            {% endif %}
+            
+            {% if responsavel_casa %}
+            <p><strong>Responsável na Casa (P/ Receber):</strong> {{ responsavel_casa }}</p>
+            {% endif %}
+            
+            {% if projeto %}
+                <p><strong>Projeto / Núcleo:</strong> {{ projeto }} {% if nucleo %} - {{ nucleo }} {% endif %}</p>
+            {% endif %}
+            
+            {% if logistica %}
+                <p><strong>Logística de Transporte Sugerida:</strong> {{ logistica }}</p>
+            {% endif %}
+        {% else %}
+            <p><strong>Operação:</strong> {{ tipo }} de Estoque</p>
+            <p><strong>Data de Registro:</strong> {{ data|date:"d/m/Y" }}</p>
+            <p><strong>Responsável do Movimento (Sistema):</strong> {{ usuario.get_full_name }}</p>
+            <p><strong>Origem/Destino:</strong> {{ origem_destino|default:"Não informado." }}</p>
+        {% endif %}
+    </div>
+
+    <!-- LISTA DE ITENS -->
+    <div class="section-title">Produtos do Lote</div>
+    <table>
+        <thead>
+            <tr>
+                <th width="10%">#</th>
+                <th width="60%">Item / Equipamento</th>
+                <th width="30%" class="text-right">Quantidade</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item_row in itens %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ item_row.item.nome }}</td>
+                <td class="text-right">
+                    {% if is_emprestimo %}
+                        {{ item_row.quantidade_emprestada }} {{ item_row.item.unidade.sigla }}
+                    {% else %}
+                        {{ item_row.quantidade }} {{ item_row.item.unidade.sigla }}
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if observacao %}
+    <div class="observacao-box">
+        <strong>Observações do Lote:</strong><br>
+        {{ observacao }}
+    </div>
+    {% endif %}
+
+    <!-- ASSINATURAS -->
+    <table class="signatures" style="border: none;">
+        <tr style="border: none;">
+            <td align="center" style="border: none;">
+                <div class="sig-line">
+                    <strong style="text-transform: uppercase;">Entregador</strong><br>
+                    Data: ____/____/20____
+                </div>
+            </td>
+            <td align="center" style="border: none;">
+                <div class="sig-line">
+                    <strong style="text-transform: uppercase;">{% if is_emprestimo %}{{ solicitante|default:"Solicitante / Recebedor" }}{% else %}Assinatura do Responsável{% endif %}</strong><br>
+                    Data: ____/____/20____
+                </div>
+            </td>
+        </tr>
+    </table>
+
+</body>
+
+</html>

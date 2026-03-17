@@ -1,5 +1,5 @@
 from django import forms
-from .models import Item, Emprestimo
+from .models import Item, Emprestimo, Movimentacao
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Row, Column, Field, HTML, Div
 
@@ -42,15 +42,12 @@ class ItemForm(forms.ModelForm):
         )
 
 
-class EmprestimoExternoForm(forms.ModelForm):
+class EmprestimoExternoHeaderForm(forms.ModelForm):
     class Meta:
         model = Emprestimo
         fields = [
-            'item', 'quantidade_emprestada',
             'nome_solicitante', 'cpf_solicitante', 'contato', 'email_solicitante', 'endereco',
-            'responsavel_casa',
-            'data_saida', 'data_saida_real', 'data_prevista',
-            'observacoes',
+            'responsavel_casa', 'data_saida', 'data_saida_real', 'data_prevista', 'observacoes',
         ]
         widgets = {
             'data_saida': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
@@ -63,17 +60,20 @@ class EmprestimoExternoForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.required = True
+        
+        # Optional fields
+        opcionais = ['observacoes', 'cpf_solicitante', 'email_solicitante', 'endereco', 'data_saida_real', 'responsavel_casa']
+        for op in opcionais:
+            if op in self.fields:
+                self.fields[op].required = False
 
 
-class EmprestimoInternoForm(forms.ModelForm):
+class EmprestimoInternoHeaderForm(forms.ModelForm):
     class Meta:
         model = Emprestimo
         fields = [
-            'item', 'quantidade_emprestada',
-            'projeto', 'nucleo',
-            'nome_solicitante', 'contato',
-            'responsavel_casa',
-            'data_saida', 'data_saida_real', 'data_prevista',
+            'projeto', 'nucleo', 'nome_solicitante', 'contato',
+            'responsavel_casa', 'data_saida', 'data_saida_real', 'data_prevista',
             'logistica', 'observacoes',
         ]
         widgets = {
@@ -88,6 +88,25 @@ class EmprestimoInternoForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.required = True
+            
+        opcionais = ['observacoes', 'logistica', 'data_saida_real', 'projeto', 'nucleo', 'responsavel_casa']
+        for op in opcionais:
+            if op in self.fields:
+                self.fields[op].required = False
+
+
+class EmprestimoItemForm(forms.Form):
+    item = forms.ModelChoiceField(queryset=Item.objects.all().order_by('nome'), label="Item", widget=forms.Select(attrs={'class': 'form-select select2-item'}))
+    quantidade = forms.IntegerField(label="Qtd. Levada", widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '1', 'min': '1'}))
+
+    def clean(self):
+        cleaned_data = super().clean()
+        item = cleaned_data.get('item')
+        quantidade = cleaned_data.get('quantidade')
+        if item and quantidade:
+            if item.quantidade_atual < quantidade:
+                self.add_error('quantidade', f"Estoque insuficiente. Saldo disponível: {item.quantidade_atual}")
+        return cleaned_data
 
 
 class DevolucaoForm(forms.ModelForm):
@@ -100,9 +119,24 @@ class DevolucaoForm(forms.ModelForm):
         }
 
 
+class MovimentacaoHeaderForm(forms.ModelForm):
+    class Meta:
+        model = Movimentacao
+        fields = ['origem_destino', 'observacao']
+        widgets = {
+            'observacao': forms.Textarea(attrs={'rows': 2}),
+        }
+
+
+class MovimentacaoEntradaItemForm(forms.Form):
+    item = forms.ModelChoiceField(queryset=Item.objects.all().order_by('nome'), label="Item", widget=forms.Select(attrs={'class': 'form-select select2-item'}))
+    quantidade = forms.IntegerField(label="Quantidade", widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '1', 'min': '1'}))
+    # Sem clean() de validação de estoque negativo, porque é entrada.
+
+
 class MovimentacaoSaidaItemForm(forms.Form):
-    item = forms.ModelChoiceField(queryset=Item.objects.all().order_by('nome'), label="Item", widget=forms.Select(attrs={'class': 'form-select select2'}))
-    quantidade = forms.IntegerField(label="Quantidade", widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '1'}))
+    item = forms.ModelChoiceField(queryset=Item.objects.all().order_by('nome'), label="Item", widget=forms.Select(attrs={'class': 'form-select select2-item'}))
+    quantidade = forms.IntegerField(label="Quantidade", widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '1', 'min': '1'}))
 
     def clean(self):
         cleaned_data = super().clean()
@@ -111,21 +145,4 @@ class MovimentacaoSaidaItemForm(forms.Form):
         if item and quantidade:
             if item.quantidade_atual < quantidade:
                 self.add_error('quantidade', f"Estoque insuficiente para {item.nome}. Disponível: {item.quantidade_atual}")
-        return cleaned_data
-
-
-class SaidaOptionsForm(forms.Form):
-    is_emprestimo = forms.BooleanField(required=False, label="É Empréstimo Interno?", widget=forms.CheckboxInput(attrs={'onchange': 'toggleLoanFields()'}))
-    nome_solicitante = forms.CharField(required=False, label="Nome do Solicitante", widget=forms.TextInput(attrs={'class': 'form-control'}))
-    contato = forms.CharField(required=False, label="Contato / Whatsapp", widget=forms.TextInput(attrs={'class': 'form-control'}))
-    data_prevista = forms.DateField(required=False, label="Previsão de Devolução", widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}))
-
-    def clean(self):
-        cleaned_data = super().clean()
-        is_emprestimo = cleaned_data.get('is_emprestimo')
-        if is_emprestimo:
-            if not cleaned_data.get('nome_solicitante'):
-                self.add_error('nome_solicitante', "Nome do solicitante é obrigatório para empréstimos.")
-            if not cleaned_data.get('data_prevista'):
-                self.add_error('data_prevista', "Data prevista de devolução é obrigatória.")
         return cleaned_data

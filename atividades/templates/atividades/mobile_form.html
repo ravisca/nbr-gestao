@@ -84,8 +84,13 @@
                     </div>
                 </form>
 
-                <div class="text-center mt-3">
-                    <a href="/admin/logout/" class="text-danger text-decoration-none">Sair do sistema</a>
+                <div class="d-grid gap-2 mt-2">
+                    <form method="post" action="{% url 'admin:logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-danger w-100">
+                            <i class="bi bi-box-arrow-right"></i> Sair do sistema
+                        </button>
+                    </form>
                 </div>
 
             </div>
