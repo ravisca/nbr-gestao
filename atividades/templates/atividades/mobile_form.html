@@ -12,24 +12,26 @@
         }
 
         .header-bg {
-            background-color: #DC2626;
+            background-color: #1a1a2e;
             color: white;
-            padding: 15px 0;
-            margin-bottom: 20px;
-            border-radius: 0 0 20px 20px;
+            padding: 25px 0 20px;
+            margin-bottom: 25px;
+            border-radius: 0 0 25px 25px;
             position: relative;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
 
         .header-logo {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 50px;
-            height: 50px;
+            display: block;
+            margin: 0 auto 10px;
+            width: 70px;
+            height: 70px;
             border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid white;
+            object-fit: contain;
+            background: white;
+            padding: 5px;
+            border: 2px solid rgba(255,255,255,0.2);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
 
         .form-card {
@@ -62,8 +64,8 @@
 
     <div class="header-bg text-center">
         <img src="{% static 'img/logo.png' %}" alt="Logo NBR" class="header-logo">
-        <h4>Olá, {{ request.user.first_name|default:request.user.username }}! 👋</h4>
-        <small>Vamos registrar a aula de hoje?</small>
+        <h4 class="mb-1">Olá, {{ request.user.first_name|default:request.user.username }}! 👋</h4>
+        <small class="opacity-75">Vamos registrar a aula de hoje?</small>
     </div>
 
     <div class="container mb-5">
@@ -78,7 +80,7 @@
                     {{ form|crispy }}
 
                     <div class="d-grid gap-2 mt-4">
-                        <button type="submit" class="btn btn-primary btn-enviar">
+                        <button type="submit" class="btn btn-dark btn-enviar">
                             🚀 Enviar Relatório
                         </button>
                     </div>
@@ -87,7 +89,7 @@
                 <div class="d-grid gap-2 mt-2">
                     <form method="post" action="{% url 'admin:logout' %}">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-outline-danger w-100">
+                        <button type="submit" class="btn btn-outline-secondary w-100">
                             <i class="bi bi-box-arrow-right"></i> Sair do sistema
                         </button>
                     </form>

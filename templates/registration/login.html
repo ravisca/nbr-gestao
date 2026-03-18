@@ -28,7 +28,7 @@
             justify-content: center;
             overflow: hidden;
             position: relative;
-            background: #1a0000;
+            background: #111122;
         }
 
         /* ── Red Swirl Background ── */
@@ -47,11 +47,11 @@
             top: -50%;
             left: -50%;
             background:
-                radial-gradient(ellipse at 30% 50%, #DC2626 0%, transparent 50%),
-                radial-gradient(ellipse at 70% 30%, #b91c1c 0%, transparent 50%),
-                radial-gradient(ellipse at 50% 70%, #991b1b 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 80%, #7f1d1d 0%, transparent 40%),
-                radial-gradient(ellipse at 20% 20%, #ef4444 0%, transparent 45%);
+                radial-gradient(ellipse at 30% 50%, #3f3f5e 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 30%, #2d2d4a 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 70%, #4b4b7a 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, #5e5e8c 0%, transparent 40%),
+                radial-gradient(ellipse at 20% 20%, #4a4a6e 0%, transparent 45%);
             animation: swirl 20s linear infinite;
         }
 
@@ -65,11 +65,11 @@
             background:
                 conic-gradient(from 0deg at 50% 50%,
                     transparent 0deg,
-                    rgba(220, 38, 38, 0.4) 60deg,
+                    rgba(63, 63, 94, 0.4) 60deg,
                     transparent 120deg,
-                    rgba(185, 28, 28, 0.3) 200deg,
+                    rgba(45, 45, 74, 0.3) 200deg,
                     transparent 260deg,
-                    rgba(239, 68, 68, 0.35) 320deg,
+                    rgba(75, 75, 122, 0.35) 320deg,
                     transparent 360deg);
             animation: swirl 15s linear infinite reverse;
         }
@@ -172,7 +172,7 @@
         }
 
         .field-label .icon {
-            color: #DC2626;
+            color: #ffffff;
             font-size: 1.1rem;
         }
 
@@ -194,7 +194,7 @@
         }
 
         .field-input:focus {
-            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.3);
+            box-shadow: 0 0 0 3px rgba(63, 63, 94, 0.3);
         }
 
         /* ── Submit Button ── */
@@ -204,8 +204,10 @@
             margin-top: 1rem;
             border: none;
             border-radius: 50px;
-            background: #ffffff;
-            color: #DC2626;
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px);
             font-family: 'Inter', sans-serif;
             font-size: 1rem;
             font-weight: 700;
@@ -219,10 +221,10 @@
         }
 
         .btn-entrar:hover {
-            background: #DC2626;
-            color: #ffffff;
+            background: #ffffff;
+            color: #1a1a2e;
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
+            box-shadow: 0 8px 25px rgba(255, 255, 255, 0.2);
         }
 
         .btn-entrar:active {
@@ -231,8 +233,8 @@
 
         /* ── Error Messages ── */
         .error-messages {
-            background: rgba(220, 38, 38, 0.2);
-            border: 1px solid rgba(220, 38, 38, 0.4);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 12px;
             padding: 0.8rem 1rem;
             margin-bottom: 1rem;
