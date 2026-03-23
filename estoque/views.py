@@ -1,3 +1,4 @@
+import copy
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView
@@ -175,10 +176,12 @@ class EmprestimoExternoCreateView(GenericLoteCreateView):
     success_url = reverse_lazy('estoque_emprestimo_list')
 
     def processar_lote(self, header_form, formset, grupo_lote):
+        base_emp = header_form.save(commit=False)
         for f in formset:
             if f.cleaned_data:
-                emp = header_form.save(commit=False)
-                emp.pk = None # force new object for each item
+                emp = copy.copy(base_emp)
+                emp.pk = None
+                emp.id = None
                 emp.tipo = 'EXTERNO'
                 emp.grupo_lote = grupo_lote
                 emp.item = f.cleaned_data['item']
@@ -192,10 +195,12 @@ class EmprestimoInternoCreateView(GenericLoteCreateView):
     success_url = reverse_lazy('estoque_emprestimo_list')
 
     def processar_lote(self, header_form, formset, grupo_lote):
+        base_emp = header_form.save(commit=False)
         for f in formset:
             if f.cleaned_data:
-                emp = header_form.save(commit=False)
-                emp.pk = None # force new object
+                emp = copy.copy(base_emp)
+                emp.pk = None
+                emp.id = None
                 emp.tipo = 'INTERNO'
                 emp.grupo_lote = grupo_lote
                 emp.item = f.cleaned_data['item']
@@ -316,6 +321,16 @@ class ReciboMovimentacaoPdfView(LoginRequiredMixin, View):
 class ReciboEmprestimoPdfView(LoginRequiredMixin, View):
     def get(self, request, grupo_lote):
         emprestimos = Emprestimo.objects.filter(grupo_lote=grupo_lote)
+
+        # Fallback: if grupo_lote is actually a pk (for loans without batch)
+        if not emprestimos.exists():
+            try:
+                emp_by_pk = Emprestimo.objects.filter(pk=int(grupo_lote))
+                if emp_by_pk.exists():
+                    emprestimos = emp_by_pk
+            except (ValueError, TypeError):
+                pass
+
         if not emprestimos.exists():
             return HttpResponse("Recibo de empréstimo não encontrado ou lote inválido.")
 
@@ -337,6 +352,7 @@ class ReciboEmprestimoPdfView(LoginRequiredMixin, View):
             'nucleo': primeiro.nucleo,
             'observacao': primeiro.observacoes,
             'tipo': primeiro.get_tipo_display(),
+            'tipo_emprestimo': primeiro.tipo,
             'grupo_lote': grupo_lote,
             'data_geracao': timezone.now(),
             'usuario': request.user,

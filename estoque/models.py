@@ -125,15 +125,18 @@ class Emprestimo(models.Model):
                 raise ValidationError({'motivo_falta': "Como a quantidade devolvida é menor que a emprestada, descreva o motivo da falta."})
 
     def save(self, *args, **kwargs):
+        from django.db import transaction
+
         is_new = self.pk is None
 
-        if is_new:
-            self.item.quantidade_atual -= self.quantidade_emprestada
-            self.item.save()
-        else:
-            if self.data_devolucao and self.quantidade_devolvida is not None and not self.devolvido:
+        with transaction.atomic():
+            super().save(*args, **kwargs)
+
+            if is_new:
+                self.item.quantidade_atual -= self.quantidade_emprestada
+                self.item.save()
+            elif self.data_devolucao and self.quantidade_devolvida is not None and not self.devolvido:
                 self.item.quantidade_atual += self.quantidade_devolvida
                 self.item.save()
                 self.devolvido = True
-
-        super().save(*args, **kwargs)
+                super().save(update_fields=['devolvido'])

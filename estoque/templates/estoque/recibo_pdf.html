@@ -9,6 +9,7 @@
         @page {
             size: A4;
             margin: 1.5cm 1cm 2cm 1cm;
+
             @frame footer {
                 -pdf-frame-content: footer_content;
                 bottom: 1cm;
@@ -74,7 +75,8 @@
             margin-bottom: 30px;
         }
 
-        th, td {
+        th,
+        td {
             border: none;
             border-bottom: 1px solid #eee;
             padding: 10px 5px;
@@ -105,14 +107,27 @@
         }
 
         .sig-line {
-            width: 45%;
-            border-top: 1px solid #000;
-            padding-top: 5px;
+            width: 80%;
+            margin: 0 auto;
+            border-top: 1px solid #333;
+            padding-top: 10px;
             text-align: center;
-            display: inline-block;
             font-size: 9pt;
+            line-height: 1.8;
         }
-        
+
+        .sig-label {
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 9pt;
+            margin-bottom: 5px;
+        }
+
+        .sig-field {
+            color: #666;
+            font-size: 8pt;
+        }
+
         #footer_content {
             font-size: 8pt;
             color: #999;
@@ -135,39 +150,46 @@
         </div>
     </div>
 
-    <!-- CABEÇALHO COMUM -->
+    <!-- CABECALHO COMUM -->
     <div class="info-box">
         {% if is_emprestimo %}
-            <p><strong>Operação:</strong> Empréstimo {{ tipo }}</p>
-            <p><strong>Data de Retirada:</strong> {{ data|date:"d/m/Y" }} 
-               {% if data_real %}&nbsp;&nbsp;|&nbsp;&nbsp; <strong>Saída Efetiva:</strong> {{ data_real|date:"d/m/Y" }}{% endif %}
-               &nbsp;&nbsp;|&nbsp;&nbsp; <strong>Previsão de Devolução:</strong> {{ previsao|date:"d/m/Y" }}</p>
-            <p><strong>Solicitante Responsável:</strong> {{ solicitante }} {% if cpf %}(CPF: {{ cpf }}){% endif %}</p>
-            
-            {% if contato or email %}
-            <p><strong>Contato:</strong> {{ contato|default:"-" }} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>E-mail:</strong> {{ email|default:"-" }}</p>
+        <p><strong>Operação:</strong> Empréstimo {{ tipo }}</p>
+        <p>
+            <strong>Data de Retirada:</strong> {{ data|date:"d/m/Y" }}
+            {% if data_real %}
+            &nbsp;&nbsp;|&nbsp;&nbsp; <strong>Saída Efetiva:</strong> {{ data_real|date:"d/m/Y" }}
             {% endif %}
-            
-            {% if endereco %}
-            <p><strong>Endereço Destino:</strong> {{ endereco }}</p>
-            {% endif %}
-            
-            {% if responsavel_casa %}
-            <p><strong>Responsável na Casa (P/ Receber):</strong> {{ responsavel_casa }}</p>
-            {% endif %}
-            
-            {% if projeto %}
-                <p><strong>Projeto / Núcleo:</strong> {{ projeto }} {% if nucleo %} - {{ nucleo }} {% endif %}</p>
-            {% endif %}
-            
-            {% if logistica %}
-                <p><strong>Logística de Transporte Sugerida:</strong> {{ logistica }}</p>
-            {% endif %}
+            &nbsp;&nbsp;|&nbsp;&nbsp; <strong>Previsão de Devolução:</strong> {{ previsao|date:"d/m/Y" }}
+        </p>
+        <p><strong>Solicitante Responsável:</strong> {{ solicitante }} {% if cpf %}(CPF: {{ cpf }}){% endif %}</p>
+        <p><strong>Registrado por:</strong> {{ usuario.get_full_name|default:usuario.username }}</p>
+
+        {% if contato %}
+        <p><strong>Contato:</strong> {{ contato|default:"-" }} &nbsp;&nbsp;</p>
+        {% endif %}
+
+        {% if endereco %}
+        <p><strong>Endereço Destino:</strong> {{ endereco }}</p>
+        {% endif %}
+
+        {% if responsavel_casa %}
+        <p><strong>Responsável na Casa (P/ Receber):</strong> {{ responsavel_casa }}</p>
+        {% endif %}
+
+        {% if projeto %}
+        <p><strong>Projeto:</strong> {{ projeto }}{% if nucleo %} / <strong>Núcleo:</strong> {{ nucleo }}{% endif %}</p>
+        {% elif nucleo %}
+        <p><strong>Núcleo:</strong> {{ nucleo }}</p>
+        {% endif %}
+
+        {% if logistica %}
+        <p><strong>Logística de Transporte Sugerida:</strong> {{ logistica }}</p>
+        {% endif %}
         {% else %}
-            <p><strong>Operação:</strong> {{ tipo }} de Estoque</p>
-            <p><strong>Data de Registro:</strong> {{ data|date:"d/m/Y" }}</p>
-            <p><strong>Responsável do Movimento (Sistema):</strong> {{ usuario.get_full_name }}</p>
-            <p><strong>Origem/Destino:</strong> {{ origem_destino|default:"Não informado." }}</p>
+        <p><strong>Operação:</strong> {{ tipo }} de Estoque</p>
+        <p><strong>Data de Registro:</strong> {{ data|date:"d/m/Y" }}</p>
+        <p><strong>Responsável do Movimento (Sistema):</strong> {{ usuario.get_full_name }}</p>
+        <p><strong>Origem/Destino:</strong> {{ origem_destino|default:"Não informado." }}</p>
         {% endif %}
     </div>
 
@@ -188,9 +210,9 @@
                 <td>{{ item_row.item.nome }}</td>
                 <td class="text-right">
                     {% if is_emprestimo %}
-                        {{ item_row.quantidade_emprestada }} {{ item_row.item.unidade.sigla }}
+                    {{ item_row.quantidade_emprestada }} {{ item_row.item.unidade.sigla }}
                     {% else %}
-                        {{ item_row.quantidade }} {{ item_row.item.unidade.sigla }}
+                    {{ item_row.quantidade }} {{ item_row.item.unidade.sigla }}
                     {% endif %}
                 </td>
             </tr>
@@ -206,20 +228,53 @@
     {% endif %}
 
     <!-- ASSINATURAS -->
-    <table class="signatures" style="border: none;">
+    <table class="signatures" style="border: none; width: 100%;">
         <tr style="border: none;">
-            <td align="center" style="border: none;">
+            {% if is_emprestimo and tipo_emprestimo == 'INTERNO' %}
+            <td align="center" style="border: none; width: 33%; padding: 0 10px;">
                 <div class="sig-line">
-                    <strong style="text-transform: uppercase;">Entregador</strong><br>
-                    Data: ____/____/20____
+                    <span class="sig-label">Responsavel (NBR)</span><br>
+                    <span class="sig-field">Data: ____/____/____</span><br>
+                    <span class="sig-field">Nome: _______________________</span>
                 </div>
             </td>
-            <td align="center" style="border: none;">
+            <td align="center" style="border: none; width: 33%; padding: 0 10px;">
                 <div class="sig-line">
-                    <strong style="text-transform: uppercase;">{% if is_emprestimo %}{{ solicitante|default:"Solicitante / Recebedor" }}{% else %}Assinatura do Responsável{% endif %}</strong><br>
-                    Data: ____/____/20____
+                    <span class="sig-label">Transporte</span><br>
+                    <span class="sig-field">Data: ____/____/____</span><br>
+                    <span class="sig-field">Nome: _______________________</span>
                 </div>
             </td>
+            <td align="center" style="border: none; width: 33%; padding: 0 10px;">
+                <div class="sig-line">
+                    <span class="sig-label">Recebimento (Destino)</span><br>
+                    <span class="sig-field">Data: ____/____/____</span><br>
+                    <span class="sig-field">Nome: _______________________</span>
+                </div>
+            </td>
+            {% else %}
+            <td align="center" style="border: none; width: 33%; padding: 0 10px;">
+                <div class="sig-line">
+                    <span class="sig-label">Separacao (NBR)</span><br>
+                    <span class="sig-field">Data: ____/____/____</span><br>
+                    <span class="sig-field">Nome: _______________________</span>
+                </div>
+            </td>
+            <td align="center" style="border: none; width: 33%; padding: 0 10px;">
+                <div class="sig-line">
+                    <span class="sig-label">Transporte (Portador)</span><br>
+                    <span class="sig-field">Data: ____/____/____</span><br>
+                    <span class="sig-field">Nome: _______________________</span>
+                </div>
+            </td>
+            <td align="center" style="border: none; width: 33%; padding: 0 10px;">
+                <div class="sig-line">
+                    <span class="sig-label">Recebimento (Destino)</span><br>
+                    <span class="sig-field">Data: ____/____/____</span><br>
+                    <span class="sig-field">Nome: _______________________</span>
+                </div>
+            </td>
+            {% endif %}
         </tr>
     </table>
 
