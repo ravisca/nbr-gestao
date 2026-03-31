@@ -68,7 +68,7 @@ class Emprestimo(models.Model):
 
     # Dados do Solicitante (Externo)
     nome_solicitante = models.CharField(max_length=200, verbose_name="Nome Completo")
-    cpf_solicitante = models.CharField(max_length=14, verbose_name="CPF/Documento", blank=True, null=True)
+    cpf_solicitante = models.CharField(max_length=18, verbose_name="CPF/CNPJ", blank=True, null=True)
     contato = models.CharField(max_length=100, verbose_name="Telefone/WhatsApp")
     email_solicitante = models.EmailField(blank=True, null=True, verbose_name="E-mail")
     endereco = models.CharField(max_length=255, verbose_name="Endereço", blank=True, null=True)

@@ -14,6 +14,7 @@ urlpatterns = [
     path('emprestimos/externo/novo/', views.EmprestimoExternoCreateView.as_view(), name='estoque_emprestimo_externo'),
     path('emprestimos/interno/novo/', views.EmprestimoInternoCreateView.as_view(), name='estoque_emprestimo_interno'),
     path('emprestimos/devolucao/<int:pk>/', views.EmprestimoDevolucaoView.as_view(), name='estoque_emprestimo_devolucao'),
+    path('emprestimos/editar/<int:pk>/', views.EmprestimoUpdateView.as_view(), name='estoque_emprestimo_editar'),
 
     # Relatórios e Recibos
     path('relatorio/', views.RelatorioEstoquePdfView.as_view(), name='estoque_relatorio_movimentacao'),

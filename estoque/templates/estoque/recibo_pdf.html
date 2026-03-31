@@ -161,7 +161,7 @@
             {% endif %}
             &nbsp;&nbsp;|&nbsp;&nbsp; <strong>Previsão de Devolução:</strong> {{ previsao|date:"d/m/Y" }}
         </p>
-        <p><strong>Solicitante Responsável:</strong> {{ solicitante }} {% if cpf %}(CPF: {{ cpf }}){% endif %}</p>
+        <p><strong>Solicitante Responsável:</strong> {{ solicitante }} {% if cpf %}(CPF/CNPJ: {{ cpf }}){% endif %}</p>
         <p><strong>Registrado por:</strong> {{ usuario.get_full_name|default:usuario.username }}</p>
 
         {% if contato %}

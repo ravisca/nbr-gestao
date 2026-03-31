@@ -167,7 +167,7 @@ class EmprestimoListView(LoginRequiredMixin, ListView):
             queryset = queryset.filter(tipo=tipo)
         return queryset
 
-from .forms import EmprestimoExternoHeaderForm, EmprestimoInternoHeaderForm, EmprestimoItemForm
+from .forms import EmprestimoExternoHeaderForm, EmprestimoInternoHeaderForm, EmprestimoItemForm, EmprestimoEditForm
 
 class EmprestimoExternoCreateView(GenericLoteCreateView):
     header_form_class = EmprestimoExternoHeaderForm
@@ -217,6 +217,20 @@ class EmprestimoDevolucaoView(LoginRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         context['titulo'] = 'Registrar Devolução'
         context['emprestimo'] = self.object
+        return context
+
+
+class EmprestimoUpdateView(LoginRequiredMixin, UpdateView):
+    model = Emprestimo
+    form_class = EmprestimoEditForm
+    template_name = 'estoque/emprestimo_form.html'
+    success_url = reverse_lazy('estoque_emprestimo_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['titulo'] = f'Editar Empréstimo #{self.object.pk}'
+        context['tipo_emprestimo'] = self.object.tipo
+        context['is_edit'] = True
         return context
 
 

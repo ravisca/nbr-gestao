@@ -119,6 +119,41 @@ class DevolucaoForm(forms.ModelForm):
         }
 
 
+class EmprestimoEditForm(forms.ModelForm):
+    class Meta:
+        model = Emprestimo
+        fields = [
+            'item', 'quantidade_emprestada',
+            'nome_solicitante', 'cpf_solicitante', 'contato', 'email_solicitante', 'endereco',
+            'responsavel_casa', 'projeto', 'nucleo', 'logistica',
+            'data_saida', 'data_saida_real', 'data_prevista', 'observacoes',
+        ]
+        widgets = {
+            'data_saida': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            'data_saida_real': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            'data_prevista': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            'logistica': forms.Textarea(attrs={'rows': 3}),
+            'observacoes': forms.Textarea(attrs={'rows': 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Item and quantity are read-only in edit mode
+        self.fields['item'].disabled = True
+        self.fields['quantidade_emprestada'].disabled = True
+
+        for field in self.fields.values():
+            field.required = True
+
+        opcionais = [
+            'observacoes', 'cpf_solicitante', 'email_solicitante', 'endereco',
+            'data_saida_real', 'responsavel_casa', 'logistica', 'projeto', 'nucleo',
+        ]
+        for op in opcionais:
+            if op in self.fields:
+                self.fields[op].required = False
+
+
 class MovimentacaoHeaderForm(forms.ModelForm):
     class Meta:
         model = Movimentacao

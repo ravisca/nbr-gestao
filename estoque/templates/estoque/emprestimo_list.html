@@ -103,6 +103,9 @@
                         {% endif %}
                     </td>
                     <td class="text-end">
+                        <a href="{% url 'estoque_emprestimo_editar' e.pk %}" class="btn btn-sm btn-outline-primary" title="Editar Empréstimo">
+                            <i class="bi bi-pencil"></i>
+                        </a>
                         <a href="{% url 'estoque_recibo_emprestimo' e.grupo_lote|default:e.pk %}" class="btn btn-sm btn-outline-dark" target="_blank" title="Imprimir Comprovante">
                             <i class="bi bi-printer"></i>
                         </a>

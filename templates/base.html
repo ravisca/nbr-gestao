@@ -306,8 +306,16 @@
                 }
             });
 
-            // Global Masks
-            $('input[name*="cpf"]').mask('000.000.000-00', { reverse: true });
+            // CPF/CNPJ dynamic mask
+            var cpfCnpjMaskBehavior = function (val) {
+                return val.replace(/\D/g, '').length > 11 ? '00.000.000/0000-00' : '000.000.000-009';
+            },
+                cpfCnpjOptions = {
+                    onKeyPress: function (val, e, field, options) {
+                        field.mask(cpfCnpjMaskBehavior.apply({}, arguments), options);
+                    }
+                };
+            $('input[name*="cpf"]').mask(cpfCnpjMaskBehavior, cpfCnpjOptions);
             $('input[name*="cnpj"]').mask('00.000.000/0000-00', { reverse: true });
 
             var maskBehavior = function (val) {
