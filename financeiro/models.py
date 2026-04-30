@@ -184,3 +184,19 @@ class Despesa(models.Model):
             self.conta.saldo_atual += self.valor
             self.conta.save()
         self.save()
+
+class LogExclusaoFinanceiro(models.Model):
+    despesa_id = models.IntegerField(verbose_name="ID da Despesa Original")
+    valor = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Valor (R$)")
+    razao_social = models.CharField(max_length=200, verbose_name="Razão Social (Fornecedor)")
+    data_exclusao = models.DateTimeField(auto_now_add=True, verbose_name="Data da Exclusão")
+    usuario = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name="Usuário")
+    justificativa = models.TextField(verbose_name="Justificativa da Exclusão")
+
+    class Meta:
+        verbose_name = "Log de Exclusão Financeira"
+        verbose_name_plural = "Logs de Exclusão Financeira"
+        ordering = ['-data_exclusao']
+
+    def __str__(self):
+        return f"Exclusão #{self.despesa_id} - R$ {self.valor} por {self.usuario}"

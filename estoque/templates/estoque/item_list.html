@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load crispy_forms_tags %}
+{% load crispy_forms_tags estoque_filters %}
 
 {% block title %}Controle de Estoque | SIGEP{% endblock %}
 
@@ -54,16 +54,20 @@
             <tbody>
                 {% for item in itens %}
                 <tr>
-                    <td class="fw-bold">{{ item.nome }}</td>
+                    <td>
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#itemModal{{ item.pk }}" class="text-decoration-none fw-bold">
+                            {{ item.nome }}
+                        </a>
+                    </td>
                     <td><small class="text-muted">{{ item.categoria }}</small></td>
                     <td><span class="badge bg-secondary">{{ item.unidade.sigla }}</span></td>
                     <td class="text-center">
                         <span
                             class="fw-bold fs-5 {% if item.quantidade_atual <= item.estoque_minimo %}text-danger{% else %}text-success{% endif %}">
-                            {{ item.quantidade_atual }}
+                            {{ item.quantidade_atual|numero_natural }}
                         </span>
                     </td>
-                    <td class="text-center text-muted">{{ item.estoque_minimo }}</td>
+                    <td class="text-center text-muted">{{ item.estoque_minimo|numero_natural }}</td>
                     <td class="text-center">
                         {% if item.quantidade_atual <= item.estoque_minimo %} <span class="badge bg-danger"><i
                                 class="bi bi-exclamation-triangle"></i> Baixo</span>
@@ -78,6 +82,41 @@
                         </a>
                     </td>
                 </tr>
+
+                <!-- Modal de Visualização do Item -->
+                <div class="modal fade" id="itemModal{{ item.pk }}" tabindex="-1" aria-labelledby="itemModalLabel{{ item.pk }}" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="itemModalLabel{{ item.pk }}">Detalhes do Item</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <dl class="row mb-0">
+                                    <dt class="col-sm-4">Nome:</dt>
+                                    <dd class="col-sm-8">{{ item.nome }}</dd>
+                                    
+                                    <dt class="col-sm-4">Categoria:</dt>
+                                    <dd class="col-sm-8">{{ item.categoria }}</dd>
+                                    
+                                    <dt class="col-sm-4">Unidade:</dt>
+                                    <dd class="col-sm-8">{{ item.unidade.nome }} ({{ item.unidade.sigla }})</dd>
+                                    
+                                    <dt class="col-sm-4">Saldo Atual:</dt>
+                                    <dd class="col-sm-8 fw-bold">{{ item.quantidade_atual|numero_natural }}</dd>
+                                    
+                                    <dt class="col-sm-4">Estoque Mínimo:</dt>
+                                    <dd class="col-sm-8">{{ item.estoque_minimo|numero_natural }}</dd>
+                                </dl>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                                <a href="{% url 'estoque_item_update' item.pk %}" class="btn btn-primary">Editar Item</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 {% empty %}
                 <tr>
                     <td colspan="7" class="text-center py-4 text-muted">Nenhum item cadastrado no estoque.</td>
@@ -85,6 +124,9 @@
                 {% endfor %}
             </tbody>
         </table>
+    </div>
+    <div class="card-footer bg-white border-top-0">
+        {% include 'includes/pagination.html' %}
     </div>
 </div>
 {% endblock %}

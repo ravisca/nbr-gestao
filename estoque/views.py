@@ -21,7 +21,9 @@ class ItemListView(LoginRequiredMixin, ListView):
     model = Item
     template_name = 'estoque/item_list.html'
     context_object_name = 'itens'
-    paginate_by = 20
+
+    def get_paginate_by(self, queryset):
+        return self.request.GET.get('per_page', 10)
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -153,18 +155,35 @@ class EmprestimoListView(LoginRequiredMixin, ListView):
     model = Emprestimo
     template_name = 'estoque/emprestimo_list.html'
     context_object_name = 'emprestimos'
-    paginate_by = 20
+    
+    def get_paginate_by(self, queryset):
+        return self.request.GET.get('per_page', 10)
 
     def get_queryset(self):
         queryset = super().get_queryset()
         status = self.request.GET.get('status')
         tipo = self.request.GET.get('tipo')
+        busca = self.request.GET.get('busca')
+        
         if status == 'pendente':
             queryset = queryset.filter(devolvido=False)
         elif status == 'devolvido':
             queryset = queryset.filter(devolvido=True)
+        elif status == 'atrasado':
+            queryset = queryset.filter(devolvido=False, data_prevista__lt=timezone.now().date())
+            
         if tipo in ('EXTERNO', 'INTERNO'):
             queryset = queryset.filter(tipo=tipo)
+            
+        if busca:
+            from django.db.models import Q
+            queryset = queryset.filter(
+                Q(item__nome__icontains=busca) |
+                Q(nome_solicitante__icontains=busca) |
+                Q(cpf_solicitante__icontains=busca) |
+                Q(contato__icontains=busca)
+            )
+            
         return queryset
 
 from .forms import EmprestimoExternoHeaderForm, EmprestimoInternoHeaderForm, EmprestimoItemForm, EmprestimoEditForm

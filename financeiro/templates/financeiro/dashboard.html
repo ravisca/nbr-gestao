@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load humanize %}
 
 {% block title %}Financeiro | SIGEP{% endblock %}
 
@@ -21,12 +22,14 @@
 <div class="row g-4 mb-5">
     {% for conta in contas %}
     <div class="col-md-4">
-        <div class="card shadow-sm border-start border-4 border-primary">
-            <div class="card-body">
-                <h6 class="text-muted text-uppercase mb-2">{{ conta.nome }}</h6>
-                <h3 class="fw-bold mb-0">R$ {{ conta.saldo_atual }}</h3>
+        <a href="?conta={{ conta.pk }}{% if busca %}&busca={{ busca }}{% endif %}" class="text-decoration-none">
+            <div class="card shadow-sm border-start border-4 {% if conta_selecionada == conta.pk %}bg-light shadow-sm{% endif %} h-100" style="border-left-color: {% if conta.projeto and conta.projeto.cor %}{{ conta.projeto.cor }}{% else %}#0d6efd{% endif %} !important; {% if conta_selecionada == conta.pk %}border-bottom: 4px solid black !important;{% endif %}">
+                <div class="card-body text-dark">
+                    <h6 class="text-muted text-uppercase mb-2">{{ conta.nome }}</h6>
+                    <h3 class="fw-bold mb-0 text-dark">R$ {{ conta.saldo_atual|intcomma }}</h3>
+                </div>
             </div>
-        </div>
+        </a>
     </div>
     {% empty %}
     <div class="col-12">
@@ -35,13 +38,32 @@
     {% endfor %}
 </div>
 
+<!-- Filtros de Projetos e Busca -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-md-5">
+                <input type="text" name="busca" class="form-control" placeholder="Buscar por Razão Social ou NF..." value="{{ busca }}">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-secondary w-100"><i class="bi bi-search"></i> Buscar</button>
+            </div>
+            {% if conta_selecionada or busca %}
+            <div class="col-md-2">
+                <a href="{% url 'financeiro_dashboard' %}" class="btn btn-outline-danger w-100"><i class="bi bi-x-circle"></i> Limpar Filtros</a>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
 <!-- Últimas Despesas -->
 <div class="row">
     <div class="col-12">
         <div class="card shadow-sm">
             <div class="card-header bg-white py-3">
                 <h5 class="mb-0 text-danger">
-                    <i class="bi bi-arrow-up-circle"></i> Últimas Saídas
+                    <i class="bi bi-list-task"></i> Listagem de Saídas
                 </h5>
             </div>
             <div class="table-responsive">
@@ -52,6 +74,7 @@
                             <th>Data Emissão</th>
                             <th>Razão Social</th>
                             <th>Projeto</th>
+                            <th>Item / Natureza</th>
                             <th>Nota Fiscal</th>
                             <th class="text-end">Valor</th>
                             <th class="text-center">Ações</th>
@@ -64,12 +87,17 @@
                             <td>{{ d.data_emissao|date:"d/m/Y" }}</td>
                             <td>{{ d.razao_social }}</td>
                             <td>{{ d.projeto }}</td>
+                            <td>{% if d.item %}{{ d.item.natureza.nome }} - {{ d.item.nome }}{% else %}—{% endif %}</td>
                             <td>{{ d.nota_fiscal }}</td>
-                            <td class="text-end fw-bold text-danger">- R$ {{ d.valor }}</td>
+                            <td class="text-end fw-bold text-danger">- R$ {{ d.valor|intcomma }}</td>
                             <td class="text-center">
-                                <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal"
+                                <button type="button" class="btn btn-sm btn-outline-warning mb-1" data-bs-toggle="modal"
                                     data-bs-target="#modalInutilizar{{ d.pk }}" title="Inutilizar">
-                                    <i class="bi bi-x-circle"></i>
+                                    <i class="bi bi-dash-circle"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger mb-1" data-bs-toggle="modal"
+                                    data-bs-target="#modalExcluir{{ d.pk }}" title="Excluir Definitivamente">
+                                    <i class="bi bi-trash"></i>
                                 </button>
                             </td>
                         </tr>
@@ -116,6 +144,51 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Modal Excluir -->
+                        <div class="modal fade" id="modalExcluir{{ d.pk }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content border-danger">
+                                    <form method="post" action="{% url 'financeiro_despesa_delete' d.pk %}">
+                                        {% csrf_token %}
+                                        <div class="modal-header bg-danger text-white">
+                                            <h5 class="modal-title">
+                                                <i class="bi bi-trash"></i> Excluir Despesa #{{ d.pk }}
+                                            </h5>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p class="text-danger fw-bold"><i class="bi bi-exclamation-triangle"></i> Atenção: Esta ação é irreversível e excluirá fisicamente o lançamento do banco de dados.</p>
+                                            <dl class="row mb-3">
+                                                <dt class="col-sm-4">Razão Social:</dt>
+                                                <dd class="col-sm-8">{{ d.razao_social }}</dd>
+                                                <dt class="col-sm-4">Valor:</dt>
+                                                <dd class="col-sm-8 text-danger fw-bold">R$ {{ d.valor|intcomma }}</dd>
+                                            </dl>
+                                            <div class="mb-3">
+                                                <label for="justificativa{{ d.pk }}" class="form-label fw-bold">Justificativa para Exclusão (Obrigatório):</label>
+                                                <textarea name="justificativa" id="justificativa{{ d.pk }}" class="form-control border-danger" rows="3" required placeholder="Digite a justificativa para auditoria..."></textarea>
+                                            </div>
+                                            <div class="form-check text-danger mb-3">
+                                                <input class="form-check-input" type="checkbox" id="confirmDelete{{ d.pk }}" required>
+                                                <label class="form-check-label fw-bold" for="confirmDelete{{ d.pk }}">
+                                                    Confirmo a exclusão definitiva desta despesa.
+                                                </label>
+                                            </div>
+                                            <div class="alert alert-secondary mb-0">
+                                                <small><i class="bi bi-info-circle"></i> O valor será devolvido ao saldo da conta e um log de auditoria será criado.</small>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                            <button type="submit" class="btn btn-danger">
+                                                <i class="bi bi-trash"></i> Sim, Excluir Definitivamente
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
                         {% empty %}
                         <tr>
                             <td colspan="7" class="text-muted text-center py-4">Nenhuma despesa recente.</td>
@@ -123,6 +196,9 @@
                         {% endfor %}
                     </tbody>
                 </table>
+            </div>
+            <div class="card-footer bg-white border-top-0">
+                {% include 'includes/pagination.html' %}
             </div>
         </div>
     </div>
@@ -154,7 +230,7 @@
                         <tr class="text-decoration-line-through text-muted">
                             <td>{{ d.pk }}</td>
                             <td>{{ d.razao_social }}</td>
-                            <td class="text-end">R$ {{ d.valor }}</td>
+                            <td class="text-end">R$ {{ d.valor|intcomma }}</td>
                             <td>{{ d.motivo_inutilizacao|default:"—" }}</td>
                             <td>{{ d.data_inutilizacao|date:"d/m/Y H:i" }}</td>
                         </tr>

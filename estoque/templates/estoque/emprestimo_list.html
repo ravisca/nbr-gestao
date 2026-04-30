@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load estoque_filters %}
 
 {% block title %}Empréstimos | SIGEP{% endblock %}
 
@@ -23,6 +24,10 @@
     <div class="card-body">
         <form method="get" class="row g-2 align-items-end">
             <div class="col-md-4">
+                <label class="form-label fw-bold">Buscar</label>
+                <input type="text" name="busca" class="form-control" placeholder="Item, solicitante, CPF..." value="{{ request.GET.busca }}">
+            </div>
+            <div class="col-md-3">
                 <label class="form-label fw-bold">Status</label>
                 <select name="status" class="form-select">
                     <option value="">Todos</option>
@@ -30,9 +35,11 @@
                     </option>
                     <option value="devolvido" {% if request.GET.status == "devolvido" %}selected{% endif %}>Devolvidos
                     </option>
+                    <option value="atrasado" {% if request.GET.status == "atrasado" %}selected{% endif %}>Atrasados
+                    </option>
                 </select>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <label class="form-label fw-bold">Tipo</label>
                 <select name="tipo" class="form-select">
                     <option value="">Todos</option>
@@ -40,7 +47,7 @@
                     <option value="INTERNO" {% if request.GET.tipo == "INTERNO" %}selected{% endif %}>Interno</option>
                 </select>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-2">
                 <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel"></i> Filtrar</button>
             </div>
         </form>
@@ -68,7 +75,11 @@
                 {% for e in emprestimos %}
                 <tr
                     class="{% if e.devolvido %}table-success{% elif e.status_display == 'Atrasado' %}table-danger{% endif %}">
-                    <td class="fw-bold">{{ e.item.nome }}</td>
+                    <td>
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#emprestimoModal{{ e.pk }}" class="text-decoration-none fw-bold">
+                            {{ e.item.nome }}
+                        </a>
+                    </td>
                     <td class="text-center">{{ e.quantidade_emprestada }}</td>
                     <td class="text-center">
                         {% if e.quantidade_devolvida is not None %}
@@ -116,6 +127,57 @@
                         {% endif %}
                     </td>
                 </tr>
+
+                <!-- Modal de Visualização do Empréstimo -->
+                <div class="modal fade" id="emprestimoModal{{ e.pk }}" tabindex="-1" aria-labelledby="emprestimoModalLabel{{ e.pk }}" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="emprestimoModalLabel{{ e.pk }}">Detalhes do Empréstimo</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <dl class="row mb-0">
+                                    <dt class="col-sm-4">Item:</dt>
+                                    <dd class="col-sm-8 fw-bold">{{ e.item.nome }}</dd>
+
+                                    <dt class="col-sm-4">Qtd. Emprestada:</dt>
+                                    <dd class="col-sm-8">{{ e.quantidade_emprestada }}</dd>
+                                    
+                                    <dt class="col-sm-4">Solicitante:</dt>
+                                    <dd class="col-sm-8">{{ e.nome_solicitante }}</dd>
+                                    
+                                    {% if e.cpf_solicitante %}
+                                    <dt class="col-sm-4">CPF:</dt>
+                                    <dd class="col-sm-8">{{ e.cpf_solicitante }}</dd>
+                                    {% endif %}
+                                    
+                                    <dt class="col-sm-4">Contato:</dt>
+                                    <dd class="col-sm-8">{{ e.contato }}</dd>
+                                    
+                                    <dt class="col-sm-4">Data Saída:</dt>
+                                    <dd class="col-sm-8">{{ e.data_saida|date:"d/m/Y" }}</dd>
+                                    
+                                    <dt class="col-sm-4">Prev. Devolução:</dt>
+                                    <dd class="col-sm-8">{{ e.data_prevista|date:"d/m/Y" }}</dd>
+
+                                    {% if e.devolvido %}
+                                    <dt class="col-sm-4">Devolvido em:</dt>
+                                    <dd class="col-sm-8 text-success">{{ e.data_devolucao|date:"d/m/Y" }}</dd>
+                                    
+                                    <dt class="col-sm-4">Qtd. Devolvida:</dt>
+                                    <dd class="col-sm-8">{{ e.quantidade_devolvida }}</dd>
+                                    {% endif %}
+                                </dl>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                                <a href="{% url 'estoque_emprestimo_editar' e.pk %}" class="btn btn-primary">Editar Empréstimo</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 {% empty %}
                 <tr>
                     <td colspan="9" class="text-center py-4 text-muted">Nenhum empréstimo registrado.</td>
@@ -123,6 +185,9 @@
                 {% endfor %}
             </tbody>
         </table>
+    </div>
+    <div class="card-footer bg-white border-top-0">
+        {% include 'includes/pagination.html' %}
     </div>
 </div>
 {% endblock %}

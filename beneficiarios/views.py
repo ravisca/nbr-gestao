@@ -13,7 +13,9 @@ class BeneficiarioListView(LoginRequiredMixin, ListView):
     model = Beneficiario
     template_name = 'beneficiarios/beneficiario_list.html'
     context_object_name = 'beneficiarios'
-    paginate_by = 20
+
+    def get_paginate_by(self, queryset):
+        return self.request.GET.get('per_page', 10)
 
     def get_queryset(self):
         queryset = super().get_queryset().prefetch_related('vinculos__projeto', 'vinculos__turno')

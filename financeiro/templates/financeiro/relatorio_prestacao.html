@@ -1,5 +1,5 @@
 <!DOCTYPE HTML>
-{% load static %}
+{% load static humanize %}
 <html lang="pt-br">
 
 <head>
@@ -101,7 +101,7 @@
 <body>
     <div class="header">
         <img src="{% static 'img/logo.png' %}" class="logo">
-        <h2 style="margin: 0;">ONG SIGEP - Prestação de Contas</h2>
+        <h2 style="margin: 0;">REF - Relatório de Execução Financeira</h2>
         <p style="margin: 5px 0;">Competência: {{ mes }}/{{ ano }}</p>
         {% if projeto_selecionado %}
         {% for p in projetos %}
@@ -138,7 +138,7 @@
                 <td>{{ d.projeto }}</td>
                 <td>{% if d.item %}{{ d.item }}{% else %}—{% endif %}</td>
                 <td>{{ d.mes_referencia }}/{{ d.ano_referencia }}</td>
-                <td class="text-right">R$ {{ d.valor }}</td>
+                <td class="text-right">R$ {{ d.valor|intcomma }}</td>
             </tr>
             {% empty %}
             <tr>
@@ -147,7 +147,7 @@
             {% endfor %}
             <tr class="total-row">
                 <td colspan="7" class="text-right">TOTAL DE SAÍDAS:</td>
-                <td class="text-right">R$ {{ total_despesas }}</td>
+                <td class="text-right">R$ {{ total_despesas|intcomma }}</td>
             </tr>
         </tbody>
     </table>
@@ -157,7 +157,7 @@
         <table>
             <tr class="total-row">
                 <td>TOTAL DE SAÍDAS:</td>
-                <td class="text-right">R$ {{ total_despesas }}</td>
+                <td class="text-right">R$ {{ total_despesas|intcomma }}</td>
             </tr>
         </table>
     </div>

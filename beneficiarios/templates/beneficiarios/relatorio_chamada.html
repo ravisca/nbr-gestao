@@ -57,10 +57,7 @@
 <body>
     <div class="header">
         <img src="{% static 'img/logo.png' %}" class="logo">
-        <h2 style="margin: 0;">ONG SIGEP - {% if projeto_titulo %}{{ projeto_titulo }}{% else %}Lista Completa de
-            Beneficiários{% endif %}</h2>
-        <p style="margin: 5px 0;">Gerado em: {{ data_geracao|date:"d/m/Y H:i" }} | Por: {{
-            usuario.get_full_name|default:usuario.username }}</p>
+        <h2 style="margin: 0;">Cadastro de beneficiários - {% if projeto_titulo %}{{ projeto_titulo }}{% else %}Geral{% endif %}</h2>
     </div>
 
     <table>
@@ -134,7 +131,8 @@
         </tbody>
     </table>
 
-    <div class="footer">
+    <div class="footer" style="text-align: right; font-size: 8pt; color: #555;">
+        Gerado em: {{ data_geracao|date:"d/m/Y H:i" }} | Por: {% if usuario.get_full_name %}{{ usuario.get_full_name }}{% else %}{{ usuario.username }}{% endif %}<br>
         Página <pdf:pagenumber> de <pdf:pagecount>
     </div>
 </body>
