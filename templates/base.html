@@ -195,7 +195,7 @@
     <!-- Mobile Toggle -->
     <div class="d-md-none p-3 shadow-sm d-flex justify-content-between align-items-center mb-3"
         style="background-color: #1a1a2e;">
-        <span class="fw-bold" style="color: #ffffff;">SIGEP</span>
+        <span class="fw-bold" style="color: #ffffff; font-size: 0.9rem;">Sistema Integrado de Gestão de Projetos</span>
         <button class="btn btn-outline-light" onclick="toggleSidebar()">
             <i class="bi bi-list"></i>
         </button>
@@ -205,7 +205,7 @@
     <nav class="sidebar" id="sidebar">
         <div class="logo-area">
             <img src="{% static 'img/logo.png' %}" alt="Logo SIGEP" style="max-height: 60px; width: 60px; border-radius: 50%; object-fit: contain; background: white; padding: 5px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1);">
-            <h4>SIGEP</h4>
+            <h4 style="font-size: 1.1rem; line-height: 1.3;">Sistema<br>Integrado de<br>Gestão de Projetos</h4>
             <small class="text-muted">Painel Administrativo</small>
         </div>
 
@@ -229,16 +229,15 @@
                 <i class="bi bi-cash-coin"></i> Financeiro
             </a>
 
+            <a href="{% url 'projeto_list' %}"
+                class="nav-link {% if 'projetos' in request.path %}active{% endif %}">
+                <i class="bi bi-folder"></i> Projetos
+            </a>
+
             <div class="h6 sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
                 <span>ADMINISTRAÇÃO</span>
             </div>
             <ul class="nav flex-column mb-2">
-                <li class="nav-item">
-                    <a class="nav-link {% if 'projetos' in request.path %}active{% endif %}"
-                        href="{% url 'projeto_list' %}">
-                        <i class="bi bi-folder-plus"></i> Gestão de Projetos
-                    </a>
-                </li>
                 <li class="nav-item">
                     <a class="nav-link {% if 'usuarios' in request.path %}active{% endif %}"
                         href="{% url 'usuario_list' %}">

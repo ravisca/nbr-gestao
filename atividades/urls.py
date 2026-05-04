@@ -9,6 +9,7 @@ urlpatterns = [
     path('projetos/', views.ProjetoListView.as_view(), name='projeto_list'),
     path('projetos/novo/', views.ProjetoCreateView.as_view(), name='projeto_create'),
     path('projetos/editar/<int:pk>/', views.ProjetoUpdateView.as_view(), name='projeto_update'),
+    path('projetos/visualizar/<int:pk>/', views.ProjetoDetailView.as_view(), name='projeto_detail'),
 
     # AJAX
     path('ajax/load-atividades/', views.load_atividades, name='ajax_load_atividades'),

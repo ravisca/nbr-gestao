@@ -48,7 +48,6 @@
             border-radius: 10px;
         }
 
-        /* Ajuste para inputs de arquivo ficarem bonitos no celular */
         input[type=file] {
             padding: 10px;
             background: #fff;
@@ -56,11 +55,23 @@
             border-radius: 5px;
             width: 100%;
         }
+
+        .field-label {
+            font-weight: 600;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        select.form-select:disabled {
+            background-color: #e9ecef;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 
 <body>
     {% load static %}
+    {% load crispy_forms_tags %}
 
     <div class="header-bg text-center">
         <img src="{% static 'img/logo.png' %}" alt="Logo NBR" class="header-logo">
@@ -72,12 +83,43 @@
         <div class="card form-card">
             <div class="card-body p-4">
 
-                {% load crispy_forms_tags %}
-
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
 
-                    {{ form|crispy }}
+                    <!-- Projeto -->
+                    <div class="mb-3">
+                        {{ form.projeto|as_crispy_field }}
+                    </div>
+
+                    <!-- Núcleo (carregado via AJAX após selecionar Projeto) -->
+                    <div class="mb-3">
+                        <label class="field-label" for="id_nucleo">Núcleo</label>
+                        <select name="nucleo" id="id_nucleo" class="form-select" disabled>
+                            <option value="">Selecione um Projeto primeiro</option>
+                        </select>
+                    </div>
+
+                    <!-- Atividade (carregada via AJAX após selecionar Núcleo) -->
+                    <div class="mb-3">
+                        <label class="field-label" for="id_tipo_atividade">Atividade Realizada</label>
+                        <select name="tipo_atividade" id="id_tipo_atividade" class="form-select" disabled>
+                            <option value="">Selecione um Núcleo primeiro</option>
+                        </select>
+                    </div>
+
+                    <!-- Demais campos -->
+                    {{ form.data|as_crispy_field }}
+                    {{ form.descricao|as_crispy_field }}
+                    {{ form.foto_1|as_crispy_field }}
+                    {{ form.foto_2|as_crispy_field }}
+                    {{ form.foto_3|as_crispy_field }}
+                    {{ form.foto_4|as_crispy_field }}
+                    {{ form.observacoes|as_crispy_field }}
+
+                    <!-- Erros do form -->
+                    {% if form.tipo_atividade.errors %}
+                    <div class="alert alert-danger">{{ form.tipo_atividade.errors }}</div>
+                    {% endif %}
 
                     <div class="d-grid gap-2 mt-4">
                         <button type="submit" class="btn btn-dark btn-enviar">
@@ -107,10 +149,72 @@
 
     <script>
         $(document).ready(function () {
-            $('select').select2({
+            // Inicializa Select2 nos selects estáticos
+            $('#id_projeto').select2({
                 theme: 'bootstrap-5',
                 width: '100%',
                 language: { noResults: function () { return "Não encontrado"; } }
+            });
+
+            function initSelect2(selector) {
+                $(selector).select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    language: { noResults: function () { return "Não encontrado"; } }
+                });
+            }
+
+            // Projeto → carrega Núcleos
+            $('#id_projeto').on('change', function () {
+                const projetoId = $(this).val();
+                const $nucleo = $('#id_nucleo');
+                const $atividade = $('#id_tipo_atividade');
+
+                // Reset atividade
+                $atividade.html('<option value="">Selecione um Núcleo primeiro</option>').prop('disabled', true);
+                if ($atividade.hasClass('select2-hidden-accessible')) $atividade.trigger('change.select2');
+
+                if (projetoId) {
+                    $.ajax({
+                        url: "{% url 'ajax_load_nucleos' %}",
+                        data: { 'projeto': projetoId },
+                        success: function (data) {
+                            $nucleo.html(data).prop('disabled', false);
+                            if (!$nucleo.hasClass('select2-hidden-accessible')) {
+                                initSelect2('#id_nucleo');
+                            } else {
+                                $nucleo.trigger('change.select2');
+                            }
+                        }
+                    });
+                } else {
+                    $nucleo.html('<option value="">Selecione um Projeto primeiro</option>').prop('disabled', true);
+                    if ($nucleo.hasClass('select2-hidden-accessible')) $nucleo.trigger('change.select2');
+                }
+            });
+
+            // Núcleo → carrega Atividades
+            $(document).on('change', '#id_nucleo', function () {
+                const nucleoId = $(this).val();
+                const $atividade = $('#id_tipo_atividade');
+
+                if (nucleoId) {
+                    $.ajax({
+                        url: "{% url 'ajax_load_atividades' %}",
+                        data: { 'nucleo': nucleoId },
+                        success: function (data) {
+                            $atividade.html(data).prop('disabled', false);
+                            if (!$atividade.hasClass('select2-hidden-accessible')) {
+                                initSelect2('#id_tipo_atividade');
+                            } else {
+                                $atividade.trigger('change.select2');
+                            }
+                        }
+                    });
+                } else {
+                    $atividade.html('<option value="">Selecione um Núcleo primeiro</option>').prop('disabled', true);
+                    if ($atividade.hasClass('select2-hidden-accessible')) $atividade.trigger('change.select2');
+                }
             });
         });
     </script>

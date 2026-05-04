@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.urls import reverse_lazy
-from django.views.generic import ListView, CreateView, UpdateView
+from django.views.generic import ListView, CreateView, UpdateView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db import transaction
 from django.http import JsonResponse
@@ -21,10 +21,14 @@ def eh_admin(user):
 
 class AdminRequiredMixin(UserPassesTestMixin):
     def test_func(self):
-        return self.request.user.is_staff or self.request.user.groups.filter(name='Professor').exists()
+        return self.request.user.is_staff or self.request.user.groups.filter(name='Núcleo').exists()
+
+class ViewProjectRequiredMixin(UserPassesTestMixin):
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.groups.filter(name__in=['Núcleo', 'Operacional']).exists()
 
 # --- Views de Gestão de Projetos (CRUD Master-Detail) ---
-class ProjetoListView(LoginRequiredMixin, AdminRequiredMixin, ListView):
+class ProjetoListView(LoginRequiredMixin, ViewProjectRequiredMixin, ListView):
     model = Projeto
     template_name = 'atividades/projeto_list.html'
     context_object_name = 'projetos'
@@ -65,6 +69,16 @@ class ProjetoCreateView(LoginRequiredMixin, AdminRequiredMixin, CreateView):
             else:
                 return self.render_to_response(self.get_context_data(form=form))
         return super().form_valid(form)
+
+class ProjetoDetailView(LoginRequiredMixin, ViewProjectRequiredMixin, DetailView):
+    model = Projeto
+    template_name = 'atividades/projeto_detail.html'
+    context_object_name = 'projeto'
+
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        data['titulo'] = f'Visualizar Projeto: {self.object.nome}'
+        return data
 
 class ProjetoUpdateView(LoginRequiredMixin, AdminRequiredMixin, UpdateView):
     model = Projeto
@@ -144,7 +158,10 @@ def sucesso_view(request):
 @login_required
 def load_atividades(request):
     projeto_id = request.GET.get('projeto')
-    if projeto_id:
+    nucleo_id = request.GET.get('nucleo')
+    if nucleo_id:
+        atividades = TipoAtividade.objects.filter(nucleo_id=nucleo_id).order_by('nome')
+    elif projeto_id:
         atividades = TipoAtividade.objects.filter(projeto_id=projeto_id).order_by('nome')
     else:
         atividades = TipoAtividade.objects.none()
