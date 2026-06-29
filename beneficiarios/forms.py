@@ -17,6 +17,16 @@ class BeneficiarioForm(forms.ModelForm):
             'data_nascimento': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
         }
 
+    def clean_cpf(self):
+        cpf = self.cleaned_data.get('cpf')
+        if cpf:
+            qs = Beneficiario.objects.filter(cpf=cpf)
+            if self.instance.pk:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
+                raise forms.ValidationError("Já existe um beneficiário cadastrado com este CPF.")
+        return cpf
+
 
 class VinculoForm(forms.ModelForm):
     class Meta:

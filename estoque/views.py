@@ -30,7 +30,27 @@ class ItemListView(LoginRequiredMixin, ListView):
         busca = self.request.GET.get('busca')
         if busca:
             queryset = queryset.filter(nome__icontains=busca)
+
+        categoria = self.request.GET.get('categoria')
+        if categoria:
+            queryset = queryset.filter(categoria_id=categoria)
+
+        status = self.request.GET.get('status')
+        if status == 'baixo':
+            from django.db.models import F
+            queryset = queryset.filter(quantidade_atual__lte=F('estoque_minimo'))
+        elif status == 'ok':
+            from django.db.models import F
+            queryset = queryset.filter(quantidade_atual__gt=F('estoque_minimo'))
+
         return queryset.order_by('nome')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['categorias'] = Categoria.objects.all().order_by('nome')
+        context['categoria_selecionada'] = self.request.GET.get('categoria', '')
+        context['status_selecionado'] = self.request.GET.get('status', '')
+        return context
 
 class ItemCreateView(LoginRequiredMixin, CreateView):
     model = Item

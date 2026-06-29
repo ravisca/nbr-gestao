@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
     <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
-    <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
+    <link rel="icon" type="image/png" href="{{ site_favicon }}">
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.10"
         integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC"
@@ -204,8 +204,8 @@
     <!-- Sidebar -->
     <nav class="sidebar" id="sidebar">
         <div class="logo-area">
-            <img src="{% static 'img/logo.png' %}" alt="Logo SIGEP" style="max-height: 60px; width: 60px; border-radius: 50%; object-fit: contain; background: white; padding: 5px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1);">
-            <h4>SIGEP</h4>
+            <img src="{{ site_logo }}" alt="Logo {{ site_nome }}" style="max-height: 60px; width: 60px; border-radius: 50%; object-fit: contain; background: white; padding: 5px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1);">
+            <h4>{{ site_nome }}</h4>
             <small class="text-muted">Painel Administrativo</small>
         </div>
 
@@ -217,7 +217,7 @@
 
             <a href="{% url 'beneficiarios_list' %}"
                 class="nav-link {% if 'beneficiarios' in request.path %}active{% endif %}">
-                <i class="bi bi-people"></i> Beneficiários
+                <i class="bi bi-people"></i> CadBen
             </a>
 
             <a href="{% url 'estoque_list' %}" class="nav-link {% if 'estoque' in request.path %}active{% endif %}">
@@ -226,7 +226,7 @@
 
             <a href="{% url 'financeiro_dashboard' %}"
                 class="nav-link {% if 'financeiro' in request.path %}active{% endif %}">
-                <i class="bi bi-cash-coin"></i> Financeiro
+                <i class="bi bi-cash-coin"></i> REF
             </a>
 
             <div class="h6 sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
@@ -243,6 +243,12 @@
                     <a class="nav-link {% if 'usuarios' in request.path %}active{% endif %}"
                         href="{% url 'usuario_list' %}">
                         <i class="bi bi-people-fill"></i> Gestão de Usuários
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'atividade_painel' %}active{% endif %}"
+                        href="{% url 'atividade_painel' %}">
+                        <i class="bi bi-clipboard-data"></i> Painel de Atividades
                     </a>
                 </li>
             </ul>

@@ -37,7 +37,7 @@ class BeneficiarioListView(LoginRequiredMixin, ListView):
                 Q(telefone__icontains=busca)
             )
             
-        return queryset.order_by('nome_completo')
+        return queryset.order_by('nome_busca')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -140,7 +140,7 @@ class ListaChamadaPdfView(LoginRequiredMixin, View):
                 Q(telefone__icontains=busca)
             )
             
-        beneficiarios = beneficiarios.order_by('nome_completo')
+        beneficiarios = beneficiarios.order_by('nome_busca')
         
         context = {
             'beneficiarios': beneficiarios,
@@ -170,7 +170,7 @@ class RelatorioPorProjetoView(LoginRequiredMixin, View):
         beneficiarios = Beneficiario.objects.filter(
             vinculos__projeto_id=projeto_id,
             status='ATIVO'
-        ).distinct().prefetch_related(vinculos_prefetch).order_by('nome_completo')
+        ).distinct().prefetch_related(vinculos_prefetch).order_by('nome_busca')
         
         context = {
             'beneficiarios': beneficiarios,

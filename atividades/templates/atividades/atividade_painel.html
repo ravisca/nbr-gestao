@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Painel de Atividades | SIGEP{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Painel de Atividades</h2>
+    <div>
+        <a href="{% url 'atividade_relatorio_pdf' %}?projeto={{ projeto_selecionado }}&monitor={{ monitor_selecionado }}&data_inicio={{ data_inicio }}&data_fim={{ data_fim }}"
+            class="btn btn-outline-dark me-2" target="_blank">
+            <i class="bi bi-file-earmark-pdf"></i> Gerar Relatório PDF
+        </a>
+        <a href="{% url 'registrar_atividade_mobile' %}" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Registrar Atividade
+        </a>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-2">
+            <div class="col-md-3">
+                <input type="text" name="busca" class="form-control" placeholder="Buscar na descrição..."
+                    value="{{ busca }}">
+            </div>
+            <div class="col-md-2">
+                <select name="projeto" class="form-select">
+                    <option value="">Todos os Projetos</option>
+                    {% for p in projetos %}
+                    <option value="{{ p.pk }}" {% if projeto_selecionado == p.pk|stringformat:"d" %}selected{% endif %}>{{ p.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="monitor" class="form-select">
+                    <option value="">Todos os Monitores</option>
+                    {% for m in monitores %}
+                    <option value="{{ m.pk }}" {% if monitor_selecionado == m.pk|stringformat:"d" %}selected{% endif %}>
+                        {{ m.get_full_name|default:m.username }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <input type="date" name="data_inicio" class="form-control" placeholder="Data Início"
+                    value="{{ data_inicio }}" title="Data Início">
+            </div>
+            <div class="col-md-2">
+                <input type="date" name="data_fim" class="form-control" placeholder="Data Fim"
+                    value="{{ data_fim }}" title="Data Fim">
+            </div>
+            <div class="col-md-1 d-flex">
+                <button type="submit" class="btn btn-outline-secondary w-100 me-1" title="Buscar"><i
+                        class="bi bi-search"></i></button>
+                <a href="{% url 'atividade_painel' %}" class="btn btn-outline-danger" title="Limpar"><i
+                        class="bi bi-x-circle"></i></a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tabela -->
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Data</th>
+                    <th>Projeto</th>
+                    <th>Atividade</th>
+                    <th>Monitor</th>
+                    <th>Descrição</th>
+                    <th class="text-center">Fotos</th>
+                    <th class="text-end">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in atividades %}
+                <tr>
+                    <td>
+                        <span class="fw-bold">{{ a.data|date:"d/m/Y" }}</span>
+                    </td>
+                    <td>
+                        <span class="badge text-dark border" style="background-color: {{ a.projeto.cor|default:'#FFFFFF' }};">
+                            {{ a.projeto.nome }}
+                        </span>
+                    </td>
+                    <td>{{ a.tipo_atividade.nome }}</td>
+                    <td>
+                        <small>{{ a.monitor.get_full_name|default:a.monitor.username|default:"—" }}</small>
+                    </td>
+                    <td>
+                        <small class="text-muted">{{ a.descricao|truncatechars:80 }}</small>
+                    </td>
+                    <td class="text-center">
+                        {% if a.foto_1 %}
+                        <span class="badge bg-info">{{ a.foto_1|yesno:"1,0" }}{% if a.foto_2 %}+{% endif %}</span>
+                        {% endif %}
+                        <small class="text-muted">
+                            {% if a.foto_1 %}1{% endif %}{% if a.foto_2 %}+1{% endif %}{% if a.foto_3 %}+1{% endif %}{% if a.foto_4 %}+1{% endif %}
+                        </small>
+                    </td>
+                    <td class="text-end">
+                        <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal"
+                            data-bs-target="#atividadeModal{{ a.pk }}" title="Ver Detalhes">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </td>
+                </tr>
+
+                <!-- Modal de Detalhes -->
+                <div class="modal fade" id="atividadeModal{{ a.pk }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <span class="badge text-dark border" style="background-color: {{ a.projeto.cor|default:'#FFFFFF' }};">
+                                        {{ a.projeto.nome }}
+                                    </span>
+                                    {{ a.tipo_atividade.nome }} — {{ a.data|date:"d/m/Y" }}
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <dl class="row mb-3">
+                                    <dt class="col-sm-3">Monitor:</dt>
+                                    <dd class="col-sm-9">{{ a.monitor.get_full_name|default:a.monitor.username|default:"—" }}</dd>
+                                    <dt class="col-sm-3">Data:</dt>
+                                    <dd class="col-sm-9">{{ a.data|date:"d/m/Y" }}</dd>
+                                    <dt class="col-sm-3">Registrado em:</dt>
+                                    <dd class="col-sm-9">{{ a.data_registro|date:"d/m/Y H:i" }}</dd>
+                                </dl>
+
+                                <h6 class="text-primary">Descrição</h6>
+                                <p>{{ a.descricao|linebreaksbr }}</p>
+
+                                {% if a.observacoes %}
+                                <h6 class="text-primary">Observações</h6>
+                                <p>{{ a.observacoes|linebreaksbr }}</p>
+                                {% endif %}
+
+                                <h6 class="text-primary">Fotos</h6>
+                                <div class="row g-2">
+                                    {% if a.foto_1 %}
+                                    <div class="col-md-6">
+                                        <img src="{{ a.foto_1.url }}" class="img-fluid rounded border" alt="Foto 1">
+                                    </div>
+                                    {% endif %}
+                                    {% if a.foto_2 %}
+                                    <div class="col-md-6">
+                                        <img src="{{ a.foto_2.url }}" class="img-fluid rounded border" alt="Foto 2">
+                                    </div>
+                                    {% endif %}
+                                    {% if a.foto_3 %}
+                                    <div class="col-md-6">
+                                        <img src="{{ a.foto_3.url }}" class="img-fluid rounded border" alt="Foto 3">
+                                    </div>
+                                    {% endif %}
+                                    {% if a.foto_4 %}
+                                    <div class="col-md-6">
+                                        <img src="{{ a.foto_4.url }}" class="img-fluid rounded border" alt="Foto 4">
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-muted">Nenhuma atividade registrada.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="card-footer bg-white border-top-0">
+        {% include 'includes/pagination.html' %}
+    </div>
+</div>
+{% endblock %}

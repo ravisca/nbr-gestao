@@ -63,7 +63,7 @@
     {% load static %}
 
     <div class="header-bg text-center">
-        <img src="{% static 'img/logo.png' %}" alt="Logo NBR" class="header-logo">
+        <img src="{{ site_logo }}" alt="Logo NBR" class="header-logo">
         <h4 class="mb-1">Olá, {{ request.user.first_name|default:request.user.username }}! 👋</h4>
         <small class="opacity-75">Vamos registrar a aula de hoje?</small>
     </div>

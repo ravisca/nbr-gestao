@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.urls import reverse_lazy
-from django.views.generic import ListView, CreateView, UpdateView
+from django.views.generic import ListView, CreateView, UpdateView, View
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db import transaction
 from django.http import JsonResponse
@@ -196,3 +196,108 @@ def delete_item_despesa(request, item_id):
     except ItemDespesa.DoesNotExist:
         print(f"ITEM {item_id} NAO EXISTE NA BASE!")
         return JsonResponse({'success': False, 'error': 'Item não encontrado'}, status=404)
+
+
+# --- Painel de Atividades Registradas ---
+from django.contrib.auth.models import User as AuthUser
+from core.utils import render_to_pdf
+from django.utils import timezone as tz
+
+class AtividadePainelView(LoginRequiredMixin, AdminRequiredMixin, ListView):
+    model = RegistroAtividade
+    template_name = 'atividades/atividade_painel.html'
+    context_object_name = 'atividades'
+    ordering = ['-data', '-id']
+
+    def get_paginate_by(self, queryset):
+        return self.request.GET.get('per_page', 10)
+
+    def get_queryset(self):
+        queryset = super().get_queryset().select_related('projeto', 'tipo_atividade', 'monitor')
+
+        projeto = self.request.GET.get('projeto')
+        if projeto:
+            queryset = queryset.filter(projeto_id=projeto)
+
+        monitor = self.request.GET.get('monitor')
+        if monitor:
+            queryset = queryset.filter(monitor_id=monitor)
+
+        data_inicio = self.request.GET.get('data_inicio')
+        if data_inicio:
+            queryset = queryset.filter(data__gte=data_inicio)
+
+        data_fim = self.request.GET.get('data_fim')
+        if data_fim:
+            queryset = queryset.filter(data__lte=data_fim)
+
+        busca = self.request.GET.get('busca')
+        if busca:
+            from django.db.models import Q
+            queryset = queryset.filter(
+                Q(descricao__icontains=busca) |
+                Q(tipo_atividade__nome__icontains=busca) |
+                Q(observacoes__icontains=busca)
+            )
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['projetos'] = Projeto.objects.filter(ativo=True).order_by('nome')
+        context['monitores'] = AuthUser.objects.filter(
+            registroatividade__isnull=False
+        ).distinct().order_by('first_name', 'last_name')
+        context['projeto_selecionado'] = self.request.GET.get('projeto', '')
+        context['monitor_selecionado'] = self.request.GET.get('monitor', '')
+        context['data_inicio'] = self.request.GET.get('data_inicio', '')
+        context['data_fim'] = self.request.GET.get('data_fim', '')
+        context['busca'] = self.request.GET.get('busca', '')
+        return context
+
+
+class RelatorioAtividadePdfView(LoginRequiredMixin, AdminRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        queryset = RegistroAtividade.objects.select_related(
+            'projeto', 'tipo_atividade', 'monitor'
+        ).order_by('-data', '-id')
+
+        projeto_id = request.GET.get('projeto')
+        if projeto_id:
+            queryset = queryset.filter(projeto_id=projeto_id)
+
+        monitor_id = request.GET.get('monitor')
+        if monitor_id:
+            queryset = queryset.filter(monitor_id=monitor_id)
+
+        data_inicio = request.GET.get('data_inicio')
+        if data_inicio:
+            queryset = queryset.filter(data__gte=data_inicio)
+
+        data_fim = request.GET.get('data_fim')
+        if data_fim:
+            queryset = queryset.filter(data__lte=data_fim)
+
+        # Construir descrição dos filtros aplicados
+        filtros = []
+        if projeto_id:
+            p = Projeto.objects.filter(pk=projeto_id).first()
+            if p:
+                filtros.append(f"Projeto: {p.nome}")
+        if monitor_id:
+            m = AuthUser.objects.filter(pk=monitor_id).first()
+            if m:
+                filtros.append(f"Monitor: {m.get_full_name() or m.username}")
+        if data_inicio:
+            filtros.append(f"De: {data_inicio}")
+        if data_fim:
+            filtros.append(f"Até: {data_fim}")
+
+        context = {
+            'atividades': queryset,
+            'filtros': ' | '.join(filtros) if filtros else 'Todos os registros',
+            'total': queryset.count(),
+            'data_geracao': tz.now(),
+            'usuario': request.user,
+        }
+        return render_to_pdf('atividades/relatorio_atividades.html', context)

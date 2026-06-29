@@ -1,6 +1,14 @@
 from django.db import models
 from django.contrib import admin
 from datetime import date
+import unicodedata
+
+def strip_accents(text):
+    """Remove acentos de uma string para ordenação alfabética correta."""
+    if not text:
+        return ''
+    nfkd = unicodedata.normalize('NFKD', text)
+    return ''.join(c for c in nfkd if not unicodedata.combining(c)).lower()
 
 class Turno(models.Model):
     nome = models.CharField(max_length=50, unique=True, verbose_name="Nome do Turno")
@@ -22,6 +30,8 @@ class Beneficiario(models.Model):
 
     # Dados Pessoais
     nome_completo = models.CharField(max_length=200, verbose_name="Nome Completo")
+    nome_busca = models.CharField(max_length=200, blank=True, editable=False, verbose_name="Nome para Ordenação",
+                                   help_text="Gerado automaticamente sem acentos para ordenação correta.")
     data_nascimento = models.DateField(verbose_name="Data de Nascimento")
     cpf = models.CharField(max_length=14, unique=True, verbose_name="CPF")
     telefone = models.CharField(max_length=20, verbose_name="Telefone para Contato")
@@ -44,6 +54,10 @@ class Beneficiario(models.Model):
 
     def __str__(self):
         return self.nome_completo
+
+    def save(self, *args, **kwargs):
+        self.nome_busca = strip_accents(self.nome_completo)
+        super().save(*args, **kwargs)
 
     # --- Campos Calculados ---
 

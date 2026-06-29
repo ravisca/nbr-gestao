@@ -1,0 +1,121 @@
+<!DOCTYPE HTML>
+{% load static %}
+<html lang="pt-br">
+
+<head>
+    <meta charset="utf-8">
+    <title>Relatório de Atividades</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 0.5cm;
+        }
+
+        body {
+            font-family: Helvetica, sans-serif;
+            font-size: 8pt;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+            position: relative;
+            min-height: 60px;
+        }
+
+        .logo {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 180px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            border: 1px solid #000;
+            padding: 3px;
+            vertical-align: top;
+            word-wrap: break-word;
+        }
+
+        th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+            text-align: left;
+            font-size: 7pt;
+        }
+
+        .filtros {
+            font-size: 8pt;
+            color: #555;
+            margin-bottom: 10px;
+        }
+
+        .resumo {
+            margin-top: 10px;
+            font-size: 9pt;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <img src="{{ site_logo_relatorio }}" class="logo">
+        <h2 style="margin: 0;">Relatório de Atividades Registradas</h2>
+        <p class="filtros"><strong>Filtros:</strong> {{ filtros }}</p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 7%;">Data</th>
+                <th style="width: 12%;">Projeto</th>
+                <th style="width: 12%;">Atividade</th>
+                <th style="width: 10%;">Monitor</th>
+                <th style="width: 40%;">Descrição</th>
+                <th style="width: 19%;">Observações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for a in atividades %}
+            <tr>
+                <td>{{ a.data|date:"d/m/Y" }}</td>
+                <td>{{ a.projeto.nome }}</td>
+                <td>{{ a.tipo_atividade.nome }}</td>
+                <td>
+                    {% if a.monitor %}
+                    {{ a.monitor.get_full_name|default:a.monitor.username }}
+                    {% else %}
+                    —
+                    {% endif %}
+                </td>
+                <td>{{ a.descricao|truncatechars:200 }}</td>
+                <td>{{ a.observacoes|default:"—"|truncatechars:100 }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 20px;">Nenhuma atividade encontrada para os filtros
+                    selecionados.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="resumo">
+        <strong>Total de registros:</strong> {{ total }}
+    </div>
+
+    <div class="footer" style="text-align: right; font-size: 8pt; color: #555; margin-top: 15px;">
+        Gerado em: {{ data_geracao|date:"d/m/Y H:i" }} | Por: {% if usuario.get_full_name %}{{ usuario.get_full_name }}{% else %}{{ usuario.username }}{% endif %}<br>
+        Página <pdf:pagenumber> de <pdf:pagecount>
+    </div>
+</body>
+
+</html>
