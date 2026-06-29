@@ -117,6 +117,13 @@ NaturezaDespesaFormSet = inlineformset_factory(
 # O inlineformset_factory restringe campos do model. Vamos tentar usar form=NaturezaDespesaForm e torcer pro Django aceitar o campo extra.
 
 class RegistroAtividadeForm(forms.ModelForm):
+    nucleo = forms.ModelChoiceField(
+        queryset=Nucleo.objects.none(),
+        required=False,
+        label="Núcleo",
+        empty_label="---------"
+    )
+
     class Meta:
         model = RegistroAtividade
         fields = ['projeto', 'tipo_atividade', 'data', 'descricao', 'foto_1', 'foto_2', 'foto_3', 'foto_4', 'observacoes']
@@ -125,3 +132,11 @@ class RegistroAtividadeForm(forms.ModelForm):
             'descricao': forms.Textarea(attrs={'rows': 3}),
             'observacoes': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Observações adicionais...'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.pk and self.instance.tipo_atividade_id:
+            nucleo = self.instance.tipo_atividade.nucleo
+            if nucleo:
+                self.fields['nucleo'].queryset = Nucleo.objects.filter(projeto=nucleo.projeto)
+                self.fields['nucleo'].initial = nucleo

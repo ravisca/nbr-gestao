@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from .views import HomeView, UsuarioListView, UsuarioCreateView
+from .views import HomeView, UsuarioListView, UsuarioCreateView, UsuarioUpdateView
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -36,6 +36,7 @@ urlpatterns = [
     # Gestão de Usuários
     path('usuarios/', UsuarioListView.as_view(), name='usuario_list'),
     path('usuarios/criar/', UsuarioCreateView.as_view(), name='usuario_create'),
+    path('usuarios/editar/<int:pk>/', UsuarioUpdateView.as_view(), name='usuario_update'),
 ]
 
 if settings.DEBUG:

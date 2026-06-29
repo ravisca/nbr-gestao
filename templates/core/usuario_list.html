@@ -36,10 +36,12 @@
                         <td>
                             {% if usuario.is_superuser %}
                             <span class="badge bg-dark">Superuser</span>
-                            {% elif usuario|has_group:"Admin" %}
-                            <span class="badge bg-primary">Administrador</span>
-                            {% elif usuario|has_group:"Professor" %}
-                            <span class="badge bg-warning text-dark">Professor</span>
+                            {% elif usuario|has_group:"Gestão" %}
+                            <span class="badge bg-primary">Gestão</span>
+                            {% elif usuario|has_group:"Núcleo" %}
+                            <span class="badge bg-warning text-dark">Núcleo</span>
+                            {% elif usuario|has_group:"Operacional" %}
+                            <span class="badge bg-info text-dark">Operacional</span>
                             {% else %}
                             <span class="badge bg-secondary">Sem Perfil</span>
                             {% endif %}
@@ -52,7 +54,7 @@
                             {% endif %}
                         </td>
                         <td>
-                            <a href="#" class="btn btn-sm btn-outline-secondary" title="Editar (Em breve)">
+                            <a href="{% url 'usuario_update' usuario.pk %}" class="btn btn-sm btn-outline-secondary" title="Editar">
                                 <i class="bi bi-pencil"></i>
                             </a>
                         </td>

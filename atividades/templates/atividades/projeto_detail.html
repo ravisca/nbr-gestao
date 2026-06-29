@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+
+        <!-- Cabeçalho -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="mb-0">
+                <span class="d-inline-block me-2" style="width:14px;height:14px;border-radius:3px;background-color:{{ projeto.cor|default:'#ccc' }};vertical-align:middle;"></span>
+                {{ projeto.nome }}
+                {% if projeto.ativo %}
+                    <span class="badge bg-success ms-2">Ativo</span>
+                {% else %}
+                    <span class="badge bg-secondary ms-2">Inativo</span>
+                {% endif %}
+            </h4>
+            <div>
+                <a href="{% url 'projeto_list' %}" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Voltar
+                </a>
+            </div>
+        </div>
+
+        <!-- Dados Gerais -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Dados do Projeto</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-5 mb-3">
+                        <small class="text-muted d-block">Nome</small>
+                        <strong>{{ projeto.nome }}</strong>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <small class="text-muted d-block">Valor Inicial</small>
+                        <strong>R$ {{ projeto.valor_inicial|floatformat:2 }}</strong>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <small class="text-muted d-block">Cor</small>
+                        <span class="d-inline-block me-1" style="width:18px;height:18px;border-radius:4px;background-color:{{ projeto.cor|default:'#ccc' }};vertical-align:middle;border:1px solid #ccc;"></span>
+                        <small>{{ projeto.cor }}</small>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <small class="text-muted d-block">Status</small>
+                        {% if projeto.ativo %}
+                            <span class="badge bg-success">Ativo</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Inativo</span>
+                        {% endif %}
+                    </div>
+                    {% if projeto.descricao %}
+                    <div class="col-12">
+                        <small class="text-muted d-block">Descrição</small>
+                        <p class="mb-0">{{ projeto.descricao }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Núcleos -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="bi bi-diagram-3 me-2 text-secondary"></i>Núcleos do Projeto</h5>
+            </div>
+            <div class="card-body">
+                {% if projeto.nucleos.exists %}
+                    <ul class="list-group list-group-flush">
+                        {% for nucleo in projeto.nucleos.all %}
+                            <li class="list-group-item px-0">
+                                <i class="bi bi-geo-alt text-primary me-2"></i>{{ nucleo.nome }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted mb-0">Nenhum núcleo cadastrado.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Atividades -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="bi bi-activity me-2 text-primary"></i>Atividades do Projeto</h5>
+            </div>
+            <div class="card-body">
+                {% if projeto.tipos_atividade.exists %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Atividade</th>
+                                    <th>Núcleo</th>
+                                    <th>Turnos Disponíveis</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for atividade in projeto.tipos_atividade.all %}
+                                <tr>
+                                    <td><strong>{{ atividade.nome }}</strong></td>
+                                    <td>{{ atividade.nucleo.nome|default:"—" }}</td>
+                                    <td>
+                                        {% for turno in atividade.turnos.all %}
+                                            <span class="badge bg-info text-dark me-1">{{ turno.nome }}</span>
+                                        {% empty %}
+                                            <span class="text-muted">—</span>
+                                        {% endfor %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted mb-0">Nenhuma atividade cadastrada.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Estrutura Financeira -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="bi bi-cash-stack me-2 text-success"></i>Estrutura Financeira (Naturezas & Itens)</h5>
+            </div>
+            <div class="card-body">
+                {% if projeto.naturezadespesa_set.exists %}
+                    {% for natureza in projeto.naturezadespesa_set.all %}
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="badge bg-secondary me-2">{{ natureza.codigo }}</span>
+                            <strong>{{ natureza.nome }}</strong>
+                        </div>
+                        {% if natureza.itens.exists %}
+                            <ul class="list-group list-group-flush ms-3">
+                                {% for item in natureza.itens.all %}
+                                <li class="list-group-item px-0 py-1">
+                                    <small class="text-muted">{{ item.codigo }} — {{ item.nome }}</small>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="text-muted ms-3 mb-0"><small>Nenhum item cadastrado nesta natureza.</small></p>
+                        {% endif %}
+                    </div>
+                    {% if not forloop.last %}<hr class="my-2">{% endif %}
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted mb-0">Nenhuma natureza de despesa cadastrada.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Rodapé -->
+        <div class="d-flex justify-content-end mb-4">
+            <a href="{% url 'projeto_list' %}" class="btn btn-primary">
+                <i class="bi bi-arrow-left"></i> Voltar à Lista
+            </a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
