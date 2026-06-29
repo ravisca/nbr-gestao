@@ -173,3 +173,25 @@ LOGOUT_REDIRECT_URL = 'login'
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+# Configuração de Logging para capturar erros 500
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'WARNING',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+    },
+}
