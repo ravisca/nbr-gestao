@@ -8,6 +8,10 @@ class RoleMiddleware:
 
     def __call__(self, request):
         if request.user.is_authenticated:
+            # Always allow superusers and 'Gestão' group to bypass role restrictions
+            if request.user.is_superuser or request.user.groups.filter(name='Gestão').exists():
+                return self.get_response(request)
+
             path = request.path
             
             # Check for Operacional group
