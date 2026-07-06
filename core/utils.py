@@ -40,11 +40,9 @@ def link_callback(uri, rel):
         if not path:
              return uri
 
-    # Make sure that file exists
+    # Make sure that file exists; if not, return URI as fallback
     if not os.path.isfile(path):
-        raise Exception(
-            'media URI must start with %s or %s' % (sUrl, mUrl)
-        )
+        return uri
     return path
 
 def render_to_pdf(template_src, context_dict={}):
