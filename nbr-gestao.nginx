@@ -5,6 +5,8 @@ server {
     location = /favicon.ico { access_log off; log_not_found off; }
     
     # Arquivos estáticos (CSS, JS, Imagens)
+    client_max_body_size 50M;
+
     location /static/ {
         # REPLACE WITH ACTUAL PATH
         alias /home/ubuntu/nbr-gestao/staticfiles/;
