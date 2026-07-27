@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView, CreateView, View
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
 from .models import Conta, Despesa, ItemDespesa, LogExclusaoFinanceiro
 from .forms import DespesaForm
@@ -70,7 +70,12 @@ class DespesaCreateView(LoginRequiredMixin, CreateView):
         return context
 
 
-class DespesaInutilizarView(LoginRequiredMixin, View):
+class StaffRequiredMixin(UserPassesTestMixin):
+    def test_func(self):
+        return self.request.user.is_staff
+
+
+class DespesaInutilizarView(LoginRequiredMixin, StaffRequiredMixin, View):
     def post(self, request, pk):
         despesa = get_object_or_404(Despesa, pk=pk)
         motivo = request.POST.get('motivo', '')
@@ -78,7 +83,7 @@ class DespesaInutilizarView(LoginRequiredMixin, View):
         messages.success(request, f'Despesa #{despesa.pk} inutilizada com sucesso. Saldo devolvido à conta.')
         return redirect('financeiro_dashboard')
 
-class DespesaDeleteView(LoginRequiredMixin, View):
+class DespesaDeleteView(LoginRequiredMixin, StaffRequiredMixin, View):
     def post(self, request, pk):
         despesa = get_object_or_404(Despesa, pk=pk)
         justificativa = request.POST.get('justificativa', '')
@@ -148,6 +153,6 @@ class RelatorioFinanceiroPdfView(LoginRequiredMixin, View):
 def load_itens_despesa(request):
     projeto_id = request.GET.get('projeto')
     itens = []
-    if projeto_id:
+    if projeto_id and projeto_id.isdigit():
         itens = ItemDespesa.objects.filter(natureza__projeto_id=projeto_id).order_by('natureza__codigo', 'codigo')
     return render(request, 'financeiro/item_dropdown_list_options.html', {'itens': itens})

@@ -52,9 +52,9 @@ class Movimentacao(models.Model):
         is_new = self.pk is None
         super().save(*args, **kwargs)
         if is_new:
-            if self.tipo == 'ENTRADA': self.item.quantidade_atual += self.quantidade
-            else: self.item.quantidade_atual -= self.quantidade
-            self.item.save()
+            delta = self.quantidade if self.tipo == 'ENTRADA' else -self.quantidade
+            Item.objects.filter(pk=self.item_id).update(quantidade_atual=models.F('quantidade_atual') + delta)
+            self.item.refresh_from_db(fields=['quantidade_atual'])
 
 
 class Emprestimo(models.Model):
@@ -133,10 +133,10 @@ class Emprestimo(models.Model):
             super().save(*args, **kwargs)
 
             if is_new:
-                self.item.quantidade_atual -= self.quantidade_emprestada
-                self.item.save()
+                Item.objects.filter(pk=self.item_id).update(quantidade_atual=models.F('quantidade_atual') - self.quantidade_emprestada)
+                self.item.refresh_from_db(fields=['quantidade_atual'])
             elif self.data_devolucao and self.quantidade_devolvida is not None and not self.devolvido:
-                self.item.quantidade_atual += self.quantidade_devolvida
-                self.item.save()
+                Item.objects.filter(pk=self.item_id).update(quantidade_atual=models.F('quantidade_atual') + self.quantidade_devolvida)
+                self.item.refresh_from_db(fields=['quantidade_atual'])
                 self.devolvido = True
                 super().save(update_fields=['devolvido'])

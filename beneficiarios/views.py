@@ -1,7 +1,8 @@
-from django.shortcuts import render
+from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DetailView, View
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib import messages
 from django.db import transaction
 from .models import Beneficiario, VinculoBeneficiario
 from .forms import BeneficiarioForm, VinculoFormSet
@@ -77,13 +78,12 @@ class BeneficiarioCreateView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         context = self.get_context_data()
         vinculos = context['vinculos']
+        if not vinculos.is_valid():
+            return self.render_to_response(self.get_context_data(form=form))
         with transaction.atomic():
             self.object = form.save()
-            if vinculos.is_valid():
-                vinculos.instance = self.object
-                vinculos.save()
-            else:
-                return self.render_to_response(self.get_context_data(form=form))
+            vinculos.instance = self.object
+            vinculos.save()
         return super().form_valid(form)
 
 class BeneficiarioUpdateView(LoginRequiredMixin, UpdateView):
@@ -104,12 +104,11 @@ class BeneficiarioUpdateView(LoginRequiredMixin, UpdateView):
     def form_valid(self, form):
         context = self.get_context_data()
         vinculos = context['vinculos']
+        if not vinculos.is_valid():
+            return self.render_to_response(self.get_context_data(form=form))
         with transaction.atomic():
             self.object = form.save()
-            if vinculos.is_valid():
-                vinculos.save()
-            else:
-                return self.render_to_response(self.get_context_data(form=form))
+            vinculos.save()
         return super().form_valid(form)
 
 class BeneficiarioDetailView(LoginRequiredMixin, DetailView):
@@ -154,11 +153,13 @@ class RelatorioPorProjetoView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         projeto_id = request.GET.get('projeto')
         if not projeto_id:
-            return render(request, 'core/error.html', {'message': 'Projeto não informado.'})
-            
+            messages.error(request, 'Selecione um projeto para gerar o relatório.')
+            return redirect('beneficiarios_list')
+
         projeto = Projeto.objects.filter(pk=projeto_id).first()
         if not projeto:
-             return render(request, 'core/error.html', {'message': 'Projeto não encontrado.'})
+            messages.error(request, 'Projeto não encontrado.')
+            return redirect('beneficiarios_list')
 
         from django.db.models import Prefetch
         
