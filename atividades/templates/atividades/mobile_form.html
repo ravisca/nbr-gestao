@@ -117,6 +117,9 @@
                     {{ form.observacoes|as_crispy_field }}
 
                     <!-- Erros do form -->
+                    {% if form.nucleo.errors %}
+                    <div class="alert alert-danger">{{ form.nucleo.errors }}</div>
+                    {% endif %}
                     {% if form.tipo_atividade.errors %}
                     <div class="alert alert-danger">{{ form.tipo_atividade.errors }}</div>
                     {% endif %}

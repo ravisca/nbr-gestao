@@ -140,3 +140,7 @@ class RegistroAtividadeForm(forms.ModelForm):
             if nucleo:
                 self.fields['nucleo'].queryset = Nucleo.objects.filter(projeto=nucleo.projeto)
                 self.fields['nucleo'].initial = nucleo
+        elif self.data.get('projeto'):
+            # Formulário de criação: o núcleo é escolhido via AJAX após selecionar o projeto,
+            # então o queryset precisa ser aberto para o projeto enviado no POST.
+            self.fields['nucleo'].queryset = Nucleo.objects.filter(projeto_id=self.data.get('projeto'))

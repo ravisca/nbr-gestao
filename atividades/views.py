@@ -57,17 +57,16 @@ class ProjetoCreateView(LoginRequiredMixin, AdminRequiredMixin, CreateView):
         nucleos = context['nucleos']
         atividades = context['atividades']
         naturezas = context['naturezas']
+        if not (nucleos.is_valid() and atividades.is_valid() and naturezas.is_valid()):
+            return self.render_to_response(self.get_context_data(form=form))
         with transaction.atomic():
             self.object = form.save()
-            if nucleos.is_valid() and atividades.is_valid() and naturezas.is_valid():
-                nucleos.instance = self.object
-                nucleos.save()
-                atividades.instance = self.object
-                atividades.save()
-                naturezas.instance = self.object
-                naturezas.save()
-            else:
-                return self.render_to_response(self.get_context_data(form=form))
+            nucleos.instance = self.object
+            nucleos.save()
+            atividades.instance = self.object
+            atividades.save()
+            naturezas.instance = self.object
+            naturezas.save()
         return super().form_valid(form)
 
 class ProjetoDetailView(LoginRequiredMixin, ViewProjectRequiredMixin, DetailView):
@@ -104,30 +103,29 @@ class ProjetoUpdateView(LoginRequiredMixin, AdminRequiredMixin, UpdateView):
         nucleos = context['nucleos']
         atividades = context['atividades']
         naturezas = context['naturezas']
+        if not (nucleos.is_valid() and atividades.is_valid() and naturezas.is_valid()):
+            return self.render_to_response(self.get_context_data(form=form))
         with transaction.atomic():
             self.object = form.save()
-            if nucleos.is_valid() and atividades.is_valid() and naturezas.is_valid():
-                nucleos.save()
-                atividades.save()
-                naturezas.save()
+            nucleos.save()
+            atividades.save()
+            naturezas.save()
 
-                # Coleta alertas de itens duplicados ignorados
-                itens_ignorados_total = []
-                for nat_form in naturezas.forms:
-                    if hasattr(nat_form, 'nomes_ignorados_warning_buffer'):
-                        itens_ignorados_total.extend(nat_form.nomes_ignorados_warning_buffer)
+            # Coleta alertas de itens duplicados ignorados
+            itens_ignorados_total = []
+            for nat_form in naturezas.forms:
+                if hasattr(nat_form, 'nomes_ignorados_warning_buffer'):
+                    itens_ignorados_total.extend(nat_form.nomes_ignorados_warning_buffer)
 
-                if itens_ignorados_total:
-                    from django.contrib import messages
-                    itens_str = ", ".join(itens_ignorados_total)
-                    if len(itens_ignorados_total) == 1:
-                        msg = f"O item rápido '{itens_str}' não foi criado pois já existia um item com este nome."
-                    else:
-                        msg = f"Os seguintes {len(itens_ignorados_total)} itens rápidos não foram criados pois já existiam com o mesmo nome: {itens_str}."
-                    messages.warning(self.request, msg)
+            if itens_ignorados_total:
+                from django.contrib import messages
+                itens_str = ", ".join(itens_ignorados_total)
+                if len(itens_ignorados_total) == 1:
+                    msg = f"O item rápido '{itens_str}' não foi criado pois já existia um item com este nome."
+                else:
+                    msg = f"Os seguintes {len(itens_ignorados_total)} itens rápidos não foram criados pois já existiam com o mesmo nome: {itens_str}."
+                messages.warning(self.request, msg)
 
-            else:
-                return self.render_to_response(self.get_context_data(form=form))
         return super().form_valid(form)
 
 # --- Views Operacionais (Mobile) ---
