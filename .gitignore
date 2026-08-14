@@ -206,3 +206,8 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Credenciais SSH
+.ssh_key.ppk
+.ssh_key_openssh
+.DS_Store

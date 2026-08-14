@@ -20,8 +20,9 @@ class RoleMiddleware:
                     '/estoque/',
                     '/beneficiarios/',
                     '/atividades/projetos/', # Permite visualizar projetos (editar é bloqueado na view)
-                    '/static/', 
+                    '/static/',
                     '/media/',
+                    '/accounts/login/',
                     '/accounts/logout/',
                     '/admin/logout/',
                 ]
@@ -35,21 +36,24 @@ class RoleMiddleware:
             # Check for Núcleo group (antigo Professor)
             elif request.user.groups.filter(name='Núcleo').exists():
                 allowed_prefixes = [
-                    '/atividades/',
-                    '/static/', 
+                    '/atividades/registrar/',
+                    '/atividades/sucesso/',
+                    '/atividades/ajax/',
+                    '/static/',
                     '/media/',
+                    '/accounts/login/',
                     '/accounts/logout/',
-                    '/admin/logout/', 
+                    '/admin/logout/',
                 ]
                 
                 is_allowed = any(path.startswith(prefix) for prefix in allowed_prefixes)
                 
                 if not is_allowed:
-                    # Redirect to Atividades Dashboard (Project List)
+                    # Redirect to Activity Registration (página principal do Núcleo)
                     try:
-                        target_url = reverse('projeto_list')
+                        target_url = reverse('registrar_atividade_mobile')
                     except:
-                        target_url = '/atividades/projetos/'
+                        target_url = '/atividades/registrar/'
                         
                     if path != target_url:
                         return redirect(target_url)
