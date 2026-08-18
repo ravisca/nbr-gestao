@@ -17,9 +17,27 @@ def site_config(request):
         favicon_url = static('img/favicon.png')
         nome_sistema = 'SIGEP'
 
+    # Group checks for template visibility
+    user = request.user
+    user_is_gestao = False
+    user_is_nucleo = False
+    user_is_operacional = False
+
+    if user.is_authenticated:
+        if user.is_superuser or user.is_staff:
+            user_is_gestao = True
+        else:
+            user_groups = set(user.groups.values_list('name', flat=True))
+            user_is_gestao = 'Gestão' in user_groups
+            user_is_nucleo = 'Núcleo' in user_groups
+            user_is_operacional = 'Operacional' in user_groups
+
     return {
         'site_logo': logo_site_url,
         'site_logo_relatorio': logo_relatorio_url,
         'site_favicon': favicon_url,
         'site_nome': nome_sistema,
+        'user_is_gestao': user_is_gestao,
+        'user_is_nucleo': user_is_nucleo,
+        'user_is_operacional': user_is_operacional,
     }

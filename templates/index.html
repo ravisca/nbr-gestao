@@ -12,6 +12,7 @@
     </div>
 
     <div class="row g-4">
+        {% if user_is_gestao or user_is_operacional %}
         <!-- Beneficiários -->
         <div class="col-md-3">
             <div class="card border-0 shadow-sm h-100">
@@ -25,7 +26,9 @@
                 </div>
             </div>
         </div>
+        {% endif %}
 
+        {% if user_is_gestao or user_is_operacional %}
         <!-- Estoque -->
         <div class="col-md-3">
             <div class="card border-0 shadow-sm h-100">
@@ -39,7 +42,9 @@
                 </div>
             </div>
         </div>
+        {% endif %}
 
+        {% if user_is_gestao %}
         <!-- Financeiro -->
         <div class="col-md-3">
             <div class="card border-0 shadow-sm h-100">
@@ -54,7 +59,9 @@
                 </div>
             </div>
         </div>
+        {% endif %}
 
+        {% if user_is_gestao or user_is_nucleo %}
         <!-- Atividades -->
         <div class="col-md-3">
             <div class="card border-0 shadow-sm h-100">
@@ -69,6 +76,7 @@
                 </div>
             </div>
         </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

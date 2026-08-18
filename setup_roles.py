@@ -22,13 +22,13 @@ def setup_groups():
     ct_registro = ContentType.objects.get_for_model(RegistroAtividade)
     ct_projeto = ContentType.objects.get_for_model(Projeto)
 
-    # Permissions for Professor
+    # Permissions for Professor (Núcleo)
+    # Núcleo pode registrar atividades e visualizar projetos (para selecionar no formulário)
+    # NÃO pode criar ou editar projetos — isso é função da Gestão
     prof_perms = [
         Permission.objects.get(content_type=ct_registro, codename='add_registroatividade'),
         Permission.objects.get(content_type=ct_registro, codename='view_registroatividade'),
         Permission.objects.get(content_type=ct_projeto, codename='view_projeto'),
-        Permission.objects.get(content_type=ct_projeto, codename='change_projeto'), # Assuming they might edit? user said "gestao" (management)
-        Permission.objects.get(content_type=ct_projeto, codename='add_projeto'),
     ]
     
     for perm in prof_perms:

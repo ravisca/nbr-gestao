@@ -5,6 +5,7 @@ from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, View, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db import transaction
+from django.db.models import Q
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 
@@ -18,6 +19,11 @@ def eh_monitor_ou_admin(user):
 
 def eh_admin(user):
     return user.is_staff
+
+class GestaoOnlyMixin(UserPassesTestMixin):
+    """Apenas Gestão (is_staff) pode acessar."""
+    def test_func(self):
+        return self.request.user.is_staff
 
 class AdminRequiredMixin(UserPassesTestMixin):
     def test_func(self):
@@ -33,7 +39,7 @@ class ProjetoListView(LoginRequiredMixin, ViewProjectRequiredMixin, ListView):
     template_name = 'atividades/projeto_list.html'
     context_object_name = 'projetos'
 
-class ProjetoCreateView(LoginRequiredMixin, AdminRequiredMixin, CreateView):
+class ProjetoCreateView(LoginRequiredMixin, GestaoOnlyMixin, CreateView):
     model = Projeto
     form_class = ProjetoForm
     template_name = 'atividades/projeto_form.html'
@@ -79,7 +85,7 @@ class ProjetoDetailView(LoginRequiredMixin, ViewProjectRequiredMixin, DetailView
         data['titulo'] = f'Visualizar Projeto: {self.object.nome}'
         return data
 
-class ProjetoUpdateView(LoginRequiredMixin, AdminRequiredMixin, UpdateView):
+class ProjetoUpdateView(LoginRequiredMixin, GestaoOnlyMixin, UpdateView):
     model = Projeto
     form_class = ProjetoForm
     template_name = 'atividades/projeto_form.html'
@@ -129,9 +135,10 @@ class ProjetoUpdateView(LoginRequiredMixin, AdminRequiredMixin, UpdateView):
         return super().form_valid(form)
 
 # --- Views Operacionais (Mobile) ---
+# Proteção já feita pelo RoleMiddleware — @user_passes_test causava redirect loop
+# quando a permissão não estava atribuída ao grupo em produção.
 
 @login_required
-@user_passes_test(eh_monitor_ou_admin)
 def registrar_atividade_view(request):
     if request.method == 'POST':
         form = RegistroAtividadeForm(request.POST, request.FILES)
@@ -157,7 +164,15 @@ def load_atividades(request):
     projeto_id = request.GET.get('projeto')
     nucleo_id = request.GET.get('nucleo')
     if nucleo_id:
-        atividades = TipoAtividade.objects.filter(nucleo_id=nucleo_id).order_by('nome')
+        nucleo = Nucleo.objects.filter(pk=nucleo_id).first()
+        if nucleo:
+            # Atividade sem núcleo definido vale para todos os núcleos do projeto
+            atividades = TipoAtividade.objects.filter(
+                Q(nucleo_id=nucleo_id) | Q(nucleo__isnull=True),
+                projeto_id=nucleo.projeto_id,
+            ).order_by('nome')
+        else:
+            atividades = TipoAtividade.objects.none()
     elif projeto_id:
         atividades = TipoAtividade.objects.filter(projeto_id=projeto_id).order_by('nome')
     else:
